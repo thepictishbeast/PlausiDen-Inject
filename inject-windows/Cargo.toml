@@ -8,5 +8,9 @@ description = "Windows injection adapters for PlausiDen"
 
 [dependencies]
 inject-core = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
+uuid = { workspace = true }

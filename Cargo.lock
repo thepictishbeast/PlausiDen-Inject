@@ -427,9 +427,13 @@ dependencies = [
 name = "inject-windows"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "inject-core",
+ "serde",
+ "serde_json",
  "thiserror",
  "tracing",
+ "uuid",
 ]
 
 [[package]]
