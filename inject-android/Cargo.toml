@@ -1,0 +1,12 @@
+[package]
+name = "inject-android"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Android injection adapters for PlausiDen"
+
+[dependencies]
+inject-core = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
