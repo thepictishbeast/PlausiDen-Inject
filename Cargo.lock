@@ -412,9 +412,15 @@ dependencies = [
 name = "inject-macos"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "inject-core",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tempfile",
  "thiserror",
  "tracing",
+ "uuid",
 ]
 
 [[package]]

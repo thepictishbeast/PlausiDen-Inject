@@ -96,6 +96,9 @@ pub enum Target {
 
     /// iOS Photos library.
     IosPhotos { container_path: PathBuf },
+
+    /// Safari browsing history (`History.db`).
+    SafariHistory { db_path: PathBuf },
 }
 
 impl std::fmt::Display for Target {
@@ -139,6 +142,9 @@ impl std::fmt::Display for Target {
             }
             Self::IosPhotos { container_path } => {
                 write!(f, "IosPhotos({})", container_path.display())
+            }
+            Self::SafariHistory { db_path } => {
+                write!(f, "SafariHistory({})", db_path.display())
             }
         }
     }

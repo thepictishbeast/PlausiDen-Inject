@@ -75,6 +75,9 @@ fn rollback_params(target: &Target) -> Result<(std::path::PathBuf, &'static str,
         Target::ChromeCookies { profile_path } => {
             Ok((profile_path.join("Cookies"), "cookies", "creation_utc"))
         }
+        Target::SafariHistory { db_path } => {
+            Ok((db_path.clone(), "history_items", "id"))
+        }
         other => Err(InjectError::UnsupportedTarget {
             description: format!("rollback not implemented for {other}"),
         }),

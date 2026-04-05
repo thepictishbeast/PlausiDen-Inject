@@ -98,6 +98,18 @@ pub fn chrome_cookies(profile: &Path) -> PathBuf {
 }
 
 // ---------------------------------------------------------------------------
+// Safari (macOS)
+// ---------------------------------------------------------------------------
+
+/// Return the default Safari `History.db` path.
+///
+/// - macOS: `~/Library/Safari/History.db`
+pub fn safari_history_db() -> Option<PathBuf> {
+    let home = dirs_home()?;
+    Some(home.join("Library/Safari/History.db"))
+}
+
+// ---------------------------------------------------------------------------
 // Chromium (generic)
 // ---------------------------------------------------------------------------
 

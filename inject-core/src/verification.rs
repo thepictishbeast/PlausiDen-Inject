@@ -76,6 +76,9 @@ pub fn verify_injection(result: &InjectionResult) -> Result<VerificationStatus> 
             let db = profile_path.join("Cookies");
             verify_sqlite_ids(&db, "cookies", "creation_utc", &result.injected_ids)
         }
+        Target::SafariHistory { db_path } => {
+            verify_sqlite_ids(db_path, "history_items", "id", &result.injected_ids)
+        }
         other => Err(InjectError::UnsupportedTarget {
             description: format!("verification not implemented for {other}"),
         }),
