@@ -110,12 +110,14 @@ impl FirefoxInjector {
 
         for record in records {
             // Upsert into moz_places.
+            // Compute url_hash in Rust (Firefox's hash() is a custom SQLite function)
+            let url_hash = url_hash(&record.url);
             tx.execute(
                 "INSERT OR IGNORE INTO moz_places (url, title, rev_host, visit_count, \
                  hidden, typed, frecency, last_visit_date, guid, foreign_count, \
                  url_hash, description, preview_image_url, origin_id) \
                  VALUES (?1, ?2, ?3, 1, 0, 0, ?4, ?5, ?6, 0, \
-                 hash(?1), NULL, NULL, NULL)",
+                 ?7, NULL, NULL, NULL)",
                 rusqlite::params![
                     record.url,
                     record.title.as_deref().unwrap_or(""),
@@ -123,6 +125,7 @@ impl FirefoxInjector {
                     record.frecency,
                     record.visit_date_us,
                     generate_guid(),
+                    url_hash,
                 ],
             )?;
 
@@ -353,6 +356,17 @@ fn generate_guid() -> String {
     // simplicity -- Firefox accepts any unique string.
     let hex = format!("{:032x}", u128::from_be_bytes(*bytes));
     hex[..12].to_string()
+}
+
+/// Compute a URL hash compatible with Firefox's internal hash function.
+/// Uses a simple FNV-like hash to produce a consistent integer.
+fn url_hash(url: &str) -> i64 {
+    let mut hash: u64 = 0xcbf29ce484222325; // FNV offset basis
+    for byte in url.bytes() {
+        hash ^= byte as u64;
+        hash = hash.wrapping_mul(0x100000001b3); // FNV prime
+    }
+    hash as i64
 }
 
 /// Create a backup copy of a database file, returning the backup path.
