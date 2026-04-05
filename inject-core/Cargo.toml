@@ -14,3 +14,11 @@ chrono = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 uuid = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"
+inject-linux = { path = "../inject-linux" }
+inject-macos = { path = "../inject-macos" }
+inject-windows = { path = "../inject-windows" }
+inject-android = { path = "../inject-android" }
+inject-ios = { path = "../inject-ios" }

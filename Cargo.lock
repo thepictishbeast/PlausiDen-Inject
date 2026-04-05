@@ -413,9 +413,15 @@ name = "inject-core"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "inject-android",
+ "inject-ios",
+ "inject-linux",
+ "inject-macos",
+ "inject-windows",
  "rusqlite",
  "serde",
  "serde_json",
+ "tempfile",
  "thiserror",
  "tracing",
  "uuid",
