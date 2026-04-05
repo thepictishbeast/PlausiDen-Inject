@@ -1,53 +1,32 @@
-//! Hurd-on-Linux translator interposition (experimental).
-//!
-//! Implements a Tier 3 injection strategy: instead of writing directly into
-//! a browser's SQLite database, a FUSE-based or LD_PRELOAD-based translator
-//! intercepts the application's filesystem reads and transparently splices
-//! injected data into the response.
-//!
-//! This approach is inspired by the GNU Hurd translator model, where any
-//! filesystem node can be backed by a user-space server.  On Linux we
-//! approximate this with:
-//!
-//! - **FUSE overlay**: mount a filesystem that proxies reads to the real
-//!   database but injects additional rows on SELECT queries.
-//! - **LD_PRELOAD shim**: intercept `open()` / `read()` / `sqlite3_step()`
-//!   at the C library level.
-//!
-//! Both approaches avoid modifying the on-disk database, which is useful
-//! when the target application must remain running.
+//! Hurd-style translator interposition (Tier 3 injection).
+//! This is the most advanced injection method — non-destructive, reversible.
+//! Currently returns UnsupportedStrategy as it requires FUSE or LD_PRELOAD.
 
-use inject_core::{
-    InjectionResult, InjectionStrategy, Injector, Target, VerificationStatus,
-};
-use inject_core::error::Result;
+use inject_core::error::{InjectError, Result};
+use inject_core::{InjectionResult, InjectionStrategy, Injector, Target, VerificationStatus};
 
-/// Translator-based injector (Hurd-on-Linux model).
 pub struct TranslatorInjector;
 
 impl Injector for TranslatorInjector {
-    fn inject(
-        &self,
-        _artifact_bytes: &[u8],
-        _target: &Target,
-        _strategy: InjectionStrategy,
-    ) -> Result<InjectionResult> {
-        todo!("TranslatorInjector::inject -- FUSE/LD_PRELOAD translator not yet implemented")
+    fn inject(&self, _artifact_bytes: &[u8], _target: &Target, _strategy: InjectionStrategy) -> Result<InjectionResult> {
+        Err(InjectError::UnsupportedStrategy { strategy: "TranslatorInterposition".into(), target: "Linux".into() })
     }
-
     fn verify(&self, _result: &InjectionResult) -> Result<VerificationStatus> {
-        todo!("TranslatorInjector::verify")
+        Err(InjectError::Other("Translator not yet implemented".into()))
     }
-
     fn rollback(&self, _result: &InjectionResult) -> Result<()> {
-        todo!("TranslatorInjector::rollback")
+        Err(InjectError::Other("Translator not yet implemented".into()))
     }
+    fn available_targets(&self) -> Vec<Target> { vec![] }
+    fn supported_strategies(&self) -> Vec<InjectionStrategy> { vec![InjectionStrategy::TranslatorInterposition] }
+}
 
-    fn available_targets(&self) -> Vec<Target> {
-        todo!("TranslatorInjector::available_targets")
-    }
-
-    fn supported_strategies(&self) -> Vec<InjectionStrategy> {
-        vec![InjectionStrategy::TranslatorInterposition]
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_translator_returns_unsupported() {
+        let inj = TranslatorInjector;
+        assert!(inj.inject(b"[]", &Target::Filesystem { path: "/tmp".into() }, InjectionStrategy::TranslatorInterposition).is_err());
     }
 }
