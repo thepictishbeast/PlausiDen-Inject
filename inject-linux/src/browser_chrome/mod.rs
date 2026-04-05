@@ -22,6 +22,9 @@ use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
+mod chrome_crypto;
+use chrome_crypto::encrypt_cookie_value;
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -215,17 +218,23 @@ impl ChromeInjector {
         for record in records {
             let expires_chrome = unix_us_to_chrome(record.expires_utc * 1_000_000);
 
+            // Chrome stores cookies with an empty `value` column and the
+            // AES-128-CBC encrypted value in `encrypted_value`.  This makes
+            // injected cookies indistinguishable from real ones.
+            let encrypted_value = encrypt_cookie_value(&record.value)?;
+
             tx.execute(
-                "INSERT INTO cookies (creation_utc, host_key, name, value, path, \
+                "INSERT INTO cookies (creation_utc, host_key, name, value, \
+                 encrypted_value, path, \
                  expires_utc, is_secure, is_httponly, last_access_utc, \
                  has_expires, is_persistent, priority, samesite, \
                  source_scheme, source_port, last_update_utc) \
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, 1, 1, ?10, ?11, ?12, -1, ?13)",
+                 VALUES (?1, ?2, ?3, '', ?4, ?5, ?6, ?7, ?8, ?9, 1, 1, ?10, ?11, ?12, -1, ?13)",
                 rusqlite::params![
                     now_chrome,
                     record.host_key,
                     record.name,
-                    record.value,
+                    encrypted_value,
                     record.path,
                     expires_chrome,
                     record.is_secure as i32,
