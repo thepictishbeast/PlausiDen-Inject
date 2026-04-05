@@ -398,9 +398,14 @@ dependencies = [
 name = "inject-android"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "inject-core",
+ "serde",
+ "serde_json",
+ "tempfile",
  "thiserror",
  "tracing",
+ "uuid",
 ]
 
 [[package]]
@@ -420,9 +425,14 @@ dependencies = [
 name = "inject-ios"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "inject-core",
+ "serde",
+ "serde_json",
+ "tempfile",
  "thiserror",
  "tracing",
+ "uuid",
 ]
 
 [[package]]
