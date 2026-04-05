@@ -111,7 +111,7 @@ impl SpotlightInjector {
         let injected_ids: Vec<String> = records
             .iter()
             .enumerate()
-            .map(|(i, r)| format!("{}::{}", output_file.display(), i))
+            .map(|(i, _r)| format!("{}::{}", output_file.display(), i))
             .collect();
 
         tracing::info!(
