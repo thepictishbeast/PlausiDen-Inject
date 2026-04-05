@@ -8,6 +8,7 @@
 
 pub mod error;
 pub mod rollback;
+pub mod sanitizer;
 pub mod target;
 pub mod traits;
 pub mod verification;

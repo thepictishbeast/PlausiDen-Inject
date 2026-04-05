@@ -45,6 +45,12 @@ pub enum InjectError {
     #[error("artifact contains no injectable records")]
     EmptyArtifact,
 
+    #[error("sanitization failed: found marker '{marker}' in output")]
+    SanitizationFailed { marker: String },
+
+    #[error("serialization error: {0}")]
+    Serialization(String),
+
     #[error("{0}")]
     Other(String),
 }
