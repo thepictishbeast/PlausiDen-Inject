@@ -6,6 +6,7 @@
 //! [`InjectionStrategy`], [`InjectionResult`], [`VerificationStatus`]) and
 //! common helper functions for verification and rollback.
 
+pub mod attribution_scrubber;
 pub mod error;
 pub mod injection_stats;
 pub mod rollback;
