@@ -13,6 +13,7 @@ pub mod rollback;
 pub mod rollback_registry;
 pub mod sanitizer;
 pub mod schema_check;
+pub mod sql_sanitizer;
 pub mod target;
 pub mod target_health;
 pub mod traits;
