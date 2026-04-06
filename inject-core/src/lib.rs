@@ -7,6 +7,7 @@
 //! common helper functions for verification and rollback.
 
 pub mod attribution_scrubber;
+pub mod conflict_detector;
 pub mod error;
 pub mod injection_stats;
 pub mod rollback;
