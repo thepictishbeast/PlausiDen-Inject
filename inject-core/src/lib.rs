@@ -15,6 +15,7 @@ pub mod schema_check;
 pub mod target;
 pub mod target_health;
 pub mod traits;
+pub mod transaction;
 pub mod verification;
 
 // Re-export the public API at crate root for convenience.
