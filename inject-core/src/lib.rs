@@ -11,6 +11,7 @@ pub mod injection_stats;
 pub mod rollback;
 pub mod sanitizer;
 pub mod target;
+pub mod target_health;
 pub mod traits;
 pub mod verification;
 
