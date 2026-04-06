@@ -9,6 +9,7 @@
 pub mod error;
 pub mod injection_stats;
 pub mod rollback;
+pub mod rollback_registry;
 pub mod sanitizer;
 pub mod schema_check;
 pub mod target;
