@@ -7,6 +7,7 @@
 //! common helper functions for verification and rollback.
 
 pub mod error;
+pub mod injection_stats;
 pub mod rollback;
 pub mod sanitizer;
 pub mod target;
