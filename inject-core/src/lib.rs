@@ -10,6 +10,7 @@ pub mod error;
 pub mod injection_stats;
 pub mod rollback;
 pub mod sanitizer;
+pub mod schema_check;
 pub mod target;
 pub mod target_health;
 pub mod traits;
