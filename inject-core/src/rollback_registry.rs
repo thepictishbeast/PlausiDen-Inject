@@ -65,7 +65,9 @@ impl RollbackRegistry {
     fn enforce_history_limit(&mut self) {
         if self.entries.len() > self.history_limit {
             // Remove the oldest committed entries first.
-            let committed_ids: Vec<(String, DateTime<Utc>)> = self.entries.iter()
+            let committed_ids: Vec<(String, DateTime<Utc>)> = self
+                .entries
+                .iter()
                 .filter(|(_, e)| e.state == RollbackState::Committed)
                 .map(|(id, e)| (id.clone(), e.committed_at.unwrap_or(e.applied_at)))
                 .collect();
@@ -118,39 +120,51 @@ impl RollbackRegistry {
 
     /// All pending entries.
     pub fn pending(&self) -> Vec<&RollbackEntry> {
-        self.entries.values()
-            .filter(|e| e.state == RollbackState::Pending).collect()
+        self.entries
+            .values()
+            .filter(|e| e.state == RollbackState::Pending)
+            .collect()
     }
 
     /// All committed entries (these are candidates for rollback).
     pub fn committed(&self) -> Vec<&RollbackEntry> {
-        self.entries.values()
-            .filter(|e| e.state == RollbackState::Committed).collect()
+        self.entries
+            .values()
+            .filter(|e| e.state == RollbackState::Committed)
+            .collect()
     }
 
     /// All rolled back entries.
     pub fn rolled_back(&self) -> Vec<&RollbackEntry> {
-        self.entries.values()
-            .filter(|e| e.state == RollbackState::RolledBack).collect()
+        self.entries
+            .values()
+            .filter(|e| e.state == RollbackState::RolledBack)
+            .collect()
     }
 
     /// Entries for a specific target.
     pub fn for_target(&self, target_id: &str) -> Vec<&RollbackEntry> {
-        self.entries.values()
-            .filter(|e| e.target_id == target_id).collect()
+        self.entries
+            .values()
+            .filter(|e| e.target_id == target_id)
+            .collect()
     }
 
     /// Failed entries.
     pub fn failed(&self) -> Vec<&RollbackEntry> {
-        self.entries.values()
-            .filter(|e| e.state == RollbackState::Failed).collect()
+        self.entries
+            .values()
+            .filter(|e| e.state == RollbackState::Failed)
+            .collect()
     }
 
     /// Recent entries within the last N seconds.
     pub fn recent(&self, secs: i64) -> Vec<&RollbackEntry> {
         let cutoff = Utc::now() - chrono::Duration::seconds(secs);
-        self.entries.values()
-            .filter(|e| e.applied_at > cutoff).collect()
+        self.entries
+            .values()
+            .filter(|e| e.applied_at > cutoff)
+            .collect()
     }
 
     pub fn entry_count(&self) -> usize {
@@ -159,7 +173,9 @@ impl RollbackRegistry {
 }
 
 impl Default for RollbackRegistry {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[cfg(test)]
@@ -242,16 +258,27 @@ mod tests {
     #[test]
     fn test_sql_revert_operation() {
         let mut r = RollbackRegistry::new();
-        r.add(entry("e1", "firefox",
-            RollbackOperation::SqlRevert { statement: "DELETE FROM moz_places WHERE id=1".into() }));
+        r.add(entry(
+            "e1",
+            "firefox",
+            RollbackOperation::SqlRevert {
+                statement: "DELETE FROM moz_places WHERE id=1".into(),
+            },
+        ));
         assert!(r.get("e1").is_some());
     }
 
     #[test]
     fn test_row_delete_operation() {
         let mut r = RollbackRegistry::new();
-        r.add(entry("e1", "firefox",
-            RollbackOperation::RowDelete { table: "moz_places".into(), row_ids: vec![1, 2, 3] }));
+        r.add(entry(
+            "e1",
+            "firefox",
+            RollbackOperation::RowDelete {
+                table: "moz_places".into(),
+                row_ids: vec![1, 2, 3],
+            },
+        ));
         match &r.get("e1").unwrap().operation {
             RollbackOperation::RowDelete { row_ids, .. } => assert_eq!(row_ids.len(), 3),
             _ => panic!("wrong operation"),

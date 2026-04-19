@@ -71,8 +71,12 @@ impl ConflictDetector {
 
         // Check active claims on the same target.
         for existing in self.claims.values() {
-            if existing.is_expired() { continue; }
-            if existing.target_id != claim.target_id { continue; }
+            if existing.is_expired() {
+                continue;
+            }
+            if existing.target_id != claim.target_id {
+                continue;
+            }
 
             let conflicting = match (&existing.kind, &claim.kind) {
                 (ClaimKind::ExclusiveWrite, ClaimKind::ExclusiveWrite) => {
@@ -114,7 +118,9 @@ impl ConflictDetector {
 
     /// Sweep expired claims.
     pub fn sweep_expired(&mut self) -> usize {
-        let expired: Vec<String> = self.claims.iter()
+        let expired: Vec<String> = self
+            .claims
+            .iter()
             .filter(|(_, c)| c.is_expired())
             .map(|(id, _)| id.clone())
             .collect();
@@ -127,19 +133,26 @@ impl ConflictDetector {
 
     /// Active claims on a target.
     pub fn active_claims_on(&self, target_id: &str) -> Vec<&TargetClaim> {
-        self.claims.values()
+        self.claims
+            .values()
             .filter(|c| c.target_id == target_id && !c.is_expired())
             .collect()
     }
 
     /// Claims held by a specific holder.
     pub fn held_by(&self, holder: &str) -> Vec<&TargetClaim> {
-        self.claims.values().filter(|c| c.holder == holder).collect()
+        self.claims
+            .values()
+            .filter(|c| c.holder == holder)
+            .collect()
     }
 
     /// Conflicts for a target.
     pub fn conflicts_on(&self, target_id: &str) -> Vec<&Conflict> {
-        self.conflicts.iter().filter(|c| c.target_id == target_id).collect()
+        self.conflicts
+            .iter()
+            .filter(|c| c.target_id == target_id)
+            .collect()
     }
 
     fn trim_history(&mut self) {
@@ -153,11 +166,15 @@ impl ConflictDetector {
         self.claims.values().filter(|c| !c.is_expired()).count()
     }
 
-    pub fn conflict_count(&self) -> usize { self.conflicts.len() }
+    pub fn conflict_count(&self) -> usize {
+        self.conflicts.len()
+    }
 }
 
 impl Default for ConflictDetector {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[cfg(test)]
@@ -178,13 +195,17 @@ mod tests {
     #[test]
     fn test_acquire_first_claim_ok() {
         let mut d = ConflictDetector::new();
-        assert!(d.acquire(claim("c1", "firefox", "h1", ClaimKind::ExclusiveWrite)).is_ok());
+        assert!(
+            d.acquire(claim("c1", "firefox", "h1", ClaimKind::ExclusiveWrite))
+                .is_ok()
+        );
     }
 
     #[test]
     fn test_exclusive_vs_exclusive_conflicts() {
         let mut d = ConflictDetector::new();
-        d.acquire(claim("c1", "firefox", "h1", ClaimKind::ExclusiveWrite)).unwrap();
+        d.acquire(claim("c1", "firefox", "h1", ClaimKind::ExclusiveWrite))
+            .unwrap();
         let result = d.acquire(claim("c2", "firefox", "h2", ClaimKind::ExclusiveWrite));
         assert!(result.is_err());
     }
@@ -192,7 +213,8 @@ mod tests {
     #[test]
     fn test_exclusive_vs_shared_conflicts() {
         let mut d = ConflictDetector::new();
-        d.acquire(claim("c1", "firefox", "h1", ClaimKind::ExclusiveWrite)).unwrap();
+        d.acquire(claim("c1", "firefox", "h1", ClaimKind::ExclusiveWrite))
+            .unwrap();
         let result = d.acquire(claim("c2", "firefox", "h2", ClaimKind::SharedRead));
         assert!(result.is_err());
     }
@@ -200,23 +222,35 @@ mod tests {
     #[test]
     fn test_shared_vs_shared_ok() {
         let mut d = ConflictDetector::new();
-        d.acquire(claim("c1", "firefox", "h1", ClaimKind::SharedRead)).unwrap();
-        assert!(d.acquire(claim("c2", "firefox", "h2", ClaimKind::SharedRead)).is_ok());
+        d.acquire(claim("c1", "firefox", "h1", ClaimKind::SharedRead))
+            .unwrap();
+        assert!(
+            d.acquire(claim("c2", "firefox", "h2", ClaimKind::SharedRead))
+                .is_ok()
+        );
     }
 
     #[test]
     fn test_different_targets_ok() {
         let mut d = ConflictDetector::new();
-        d.acquire(claim("c1", "firefox", "h1", ClaimKind::ExclusiveWrite)).unwrap();
-        assert!(d.acquire(claim("c2", "chrome", "h1", ClaimKind::ExclusiveWrite)).is_ok());
+        d.acquire(claim("c1", "firefox", "h1", ClaimKind::ExclusiveWrite))
+            .unwrap();
+        assert!(
+            d.acquire(claim("c2", "chrome", "h1", ClaimKind::ExclusiveWrite))
+                .is_ok()
+        );
     }
 
     #[test]
     fn test_release() {
         let mut d = ConflictDetector::new();
-        d.acquire(claim("c1", "firefox", "h1", ClaimKind::ExclusiveWrite)).unwrap();
+        d.acquire(claim("c1", "firefox", "h1", ClaimKind::ExclusiveWrite))
+            .unwrap();
         d.release("c1");
-        assert!(d.acquire(claim("c2", "firefox", "h2", ClaimKind::ExclusiveWrite)).is_ok());
+        assert!(
+            d.acquire(claim("c2", "firefox", "h2", ClaimKind::ExclusiveWrite))
+                .is_ok()
+        );
     }
 
     #[test]
@@ -231,16 +265,20 @@ mod tests {
     #[test]
     fn test_active_claims_on() {
         let mut d = ConflictDetector::new();
-        d.acquire(claim("c1", "firefox", "h1", ClaimKind::SharedRead)).unwrap();
-        d.acquire(claim("c2", "firefox", "h2", ClaimKind::SharedRead)).unwrap();
+        d.acquire(claim("c1", "firefox", "h1", ClaimKind::SharedRead))
+            .unwrap();
+        d.acquire(claim("c2", "firefox", "h2", ClaimKind::SharedRead))
+            .unwrap();
         assert_eq!(d.active_claims_on("firefox").len(), 2);
     }
 
     #[test]
     fn test_held_by() {
         let mut d = ConflictDetector::new();
-        d.acquire(claim("c1", "firefox", "h1", ClaimKind::ExclusiveWrite)).unwrap();
-        d.acquire(claim("c2", "chrome", "h1", ClaimKind::ExclusiveWrite)).unwrap();
+        d.acquire(claim("c1", "firefox", "h1", ClaimKind::ExclusiveWrite))
+            .unwrap();
+        d.acquire(claim("c2", "chrome", "h1", ClaimKind::ExclusiveWrite))
+            .unwrap();
         assert_eq!(d.held_by("h1").len(), 2);
     }
 }

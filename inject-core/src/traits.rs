@@ -184,9 +184,7 @@ pub struct InjectionResult {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum VerificationStatus {
     /// Every injected record was found in the target store.
-    AllPresent {
-        checked: usize,
-    },
+    AllPresent { checked: usize },
 
     /// Some injected records are missing.
     PartiallyPresent {
@@ -196,9 +194,7 @@ pub enum VerificationStatus {
     },
 
     /// No injected records were found at all.
-    NonePresent {
-        expected: usize,
-    },
+    NonePresent { expected: usize },
 }
 
 // ---------------------------------------------------------------------------

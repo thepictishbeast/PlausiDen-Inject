@@ -275,10 +275,7 @@ fn extract_domain(url: &str) -> String {
 /// Create a backup copy of a database file, returning the backup path.
 fn backup_database(db_path: &Path) -> Result<PathBuf> {
     let timestamp = Utc::now().format("%Y%m%d%H%M%S");
-    let file_name = db_path
-        .file_name()
-        .and_then(|n| n.to_str())
-        .unwrap_or("db");
+    let file_name = db_path.file_name().and_then(|n| n.to_str()).unwrap_or("db");
     let backup_name = format!("{file_name}.plausiden-backup.{timestamp}");
     let backup_path = db_path.with_file_name(backup_name);
 
@@ -321,7 +318,10 @@ mod tests {
 
     #[test]
     fn extract_domain_strips_www() {
-        assert_eq!(extract_domain("https://www.example.com/page"), "example.com");
+        assert_eq!(
+            extract_domain("https://www.example.com/page"),
+            "example.com"
+        );
     }
 
     #[test]

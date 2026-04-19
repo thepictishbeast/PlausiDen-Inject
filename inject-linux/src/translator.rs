@@ -8,8 +8,16 @@ use inject_core::{InjectionResult, InjectionStrategy, Injector, Target, Verifica
 pub struct TranslatorInjector;
 
 impl Injector for TranslatorInjector {
-    fn inject(&self, _artifact_bytes: &[u8], _target: &Target, _strategy: InjectionStrategy) -> Result<InjectionResult> {
-        Err(InjectError::UnsupportedStrategy { strategy: "TranslatorInterposition".into(), target: "Linux".into() })
+    fn inject(
+        &self,
+        _artifact_bytes: &[u8],
+        _target: &Target,
+        _strategy: InjectionStrategy,
+    ) -> Result<InjectionResult> {
+        Err(InjectError::UnsupportedStrategy {
+            strategy: "TranslatorInterposition".into(),
+            target: "Linux".into(),
+        })
     }
     fn verify(&self, _result: &InjectionResult) -> Result<VerificationStatus> {
         Err(InjectError::Other("Translator not yet implemented".into()))
@@ -17,8 +25,12 @@ impl Injector for TranslatorInjector {
     fn rollback(&self, _result: &InjectionResult) -> Result<()> {
         Err(InjectError::Other("Translator not yet implemented".into()))
     }
-    fn available_targets(&self) -> Vec<Target> { vec![] }
-    fn supported_strategies(&self) -> Vec<InjectionStrategy> { vec![InjectionStrategy::TranslatorInterposition] }
+    fn available_targets(&self) -> Vec<Target> {
+        vec![]
+    }
+    fn supported_strategies(&self) -> Vec<InjectionStrategy> {
+        vec![InjectionStrategy::TranslatorInterposition]
+    }
 }
 
 #[cfg(test)]
@@ -27,6 +39,15 @@ mod tests {
     #[test]
     fn test_translator_returns_unsupported() {
         let inj = TranslatorInjector;
-        assert!(inj.inject(b"[]", &Target::Filesystem { path: "/tmp".into() }, InjectionStrategy::TranslatorInterposition).is_err());
+        assert!(
+            inj.inject(
+                b"[]",
+                &Target::Filesystem {
+                    path: "/tmp".into()
+                },
+                InjectionStrategy::TranslatorInterposition
+            )
+            .is_err()
+        );
     }
 }

@@ -104,7 +104,8 @@ impl SchemaChecker {
             match actual.iter().find(|c| c.name == expected_col.name) {
                 None => missing.push(expected_col.name.clone()),
                 Some(actual_col) => {
-                    if actual_col.data_type.to_lowercase() != expected_col.data_type.to_lowercase() {
+                    if actual_col.data_type.to_lowercase() != expected_col.data_type.to_lowercase()
+                    {
                         mismatches.push((
                             expected_col.name.clone(),
                             expected_col.data_type.clone(),
@@ -117,7 +118,8 @@ impl SchemaChecker {
 
         let expected_names: std::collections::HashSet<&String> =
             expected.columns.iter().map(|c| &c.name).collect();
-        let extra: Vec<String> = actual.iter()
+        let extra: Vec<String> = actual
+            .iter()
             .filter(|c| !expected_names.contains(&c.name))
             .map(|c| c.name.clone())
             .collect();
@@ -151,7 +153,10 @@ impl SchemaChecker {
 
     /// Count of tables with breaking changes.
     pub fn breaking_tables(&self) -> usize {
-        self.history.iter().filter(|r| r.has_breaking_changes()).count()
+        self.history
+            .iter()
+            .filter(|r| r.has_breaking_changes())
+            .count()
     }
 
     /// Registered expected schemas.
@@ -161,7 +166,9 @@ impl SchemaChecker {
 }
 
 impl Default for SchemaChecker {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[cfg(test)]
@@ -216,10 +223,7 @@ mod tests {
     fn test_missing_column() {
         let mut c = SchemaChecker::new();
         c.register(expected_schema());
-        let actual_cols = vec![
-            actual("id", "INTEGER"),
-            actual("url", "TEXT"),
-        ];
+        let actual_cols = vec![actual("id", "INTEGER"), actual("url", "TEXT")];
         let result = c.check("moz_places", &actual_cols, Some(45));
         assert_eq!(result.missing_columns.len(), 2);
     }

@@ -41,23 +41,15 @@ fn make_macos_fsevents(dir: &std::path::Path) -> inject_macos::fsevents::FsEvent
     inject_macos::fsevents::FsEventsInjector::with_output_dir(dir.to_path_buf())
 }
 
-fn make_windows_registry(
-    dir: &std::path::Path,
-) -> inject_windows::registry::RegistryInjector {
-    inject_windows::registry::RegistryInjector::with_output_path(
-        dir.join("test.reg"),
-    )
+fn make_windows_registry(dir: &std::path::Path) -> inject_windows::registry::RegistryInjector {
+    inject_windows::registry::RegistryInjector::with_output_path(dir.join("test.reg"))
 }
 
-fn make_windows_prefetch(
-    dir: &std::path::Path,
-) -> inject_windows::prefetch::PrefetchInjector {
+fn make_windows_prefetch(dir: &std::path::Path) -> inject_windows::prefetch::PrefetchInjector {
     inject_windows::prefetch::PrefetchInjector::new(dir.to_path_buf())
 }
 
-fn make_windows_eventlog(
-    dir: &std::path::Path,
-) -> inject_windows::eventlog::EventLogInjector {
+fn make_windows_eventlog(dir: &std::path::Path) -> inject_windows::eventlog::EventLogInjector {
     inject_windows::eventlog::EventLogInjector::new(dir.to_path_buf())
 }
 
@@ -87,9 +79,7 @@ fn make_android_content_provider(
     inject_android::content_provider::ContentProviderInjector::new(dir.to_path_buf())
 }
 
-fn make_android_sqlite(
-    dir: &std::path::Path,
-) -> inject_android::sqlite::AndroidSqliteInjector {
+fn make_android_sqlite(dir: &std::path::Path) -> inject_android::sqlite::AndroidSqliteInjector {
     inject_android::sqlite::AndroidSqliteInjector::new(dir.to_path_buf())
 }
 
@@ -105,9 +95,7 @@ fn make_android_media_store(
     inject_android::media_store::MediaStoreInjector::new(dir.to_path_buf())
 }
 
-fn make_android_files(
-    dir: &std::path::Path,
-) -> inject_android::files::AndroidFileInjector {
+fn make_android_files(dir: &std::path::Path) -> inject_android::files::AndroidFileInjector {
     inject_android::files::AndroidFileInjector::new(dir.to_path_buf())
 }
 
@@ -185,7 +173,10 @@ fn all_injectors_return_correct_supported_strategies() {
         ("ChromeInjector", Box::new(make_linux_chrome())),
         ("SafariInjector", Box::new(make_macos_safari())),
         ("SpotlightInjector", Box::new(make_macos_spotlight(d))),
-        ("MacosFilesystemInjector", Box::new(make_macos_filesystem(d))),
+        (
+            "MacosFilesystemInjector",
+            Box::new(make_macos_filesystem(d)),
+        ),
         ("CoreDataInjector", Box::new(make_macos_coredata(d))),
         ("FsEventsInjector", Box::new(make_macos_fsevents(d))),
         ("RegistryInjector", Box::new(make_windows_registry(d))),
@@ -200,7 +191,10 @@ fn all_injectors_return_correct_supported_strategies() {
             Box::new(make_android_content_provider(d)),
         ),
         ("AndroidSqliteInjector", Box::new(make_android_sqlite(d))),
-        ("SharedPrefsInjector", Box::new(make_android_shared_prefs(d))),
+        (
+            "SharedPrefsInjector",
+            Box::new(make_android_shared_prefs(d)),
+        ),
         ("MediaStoreInjector", Box::new(make_android_media_store(d))),
         ("AndroidFileInjector", Box::new(make_android_files(d))),
         ("ContactsInjector", Box::new(make_ios_contacts(d))),
@@ -401,15 +395,8 @@ fn all_injectors_reject_empty_artifact_bytes() {
     ];
 
     for (name, injector, target) in &injectors {
-        let result = injector.inject(
-            empty_array,
-            target,
-            InjectionStrategy::DirectInjection,
-        );
-        assert!(
-            result.is_err(),
-            "{name} should reject an empty artifact"
-        );
+        let result = injector.inject(empty_array, target, InjectionStrategy::DirectInjection);
+        assert!(result.is_err(), "{name} should reject an empty artifact");
         let err_msg = format!("{}", result.unwrap_err());
         assert!(
             err_msg.contains("no injectable records")
@@ -544,10 +531,17 @@ fn windows_injectors_write_to_correct_locations() {
         hive_path: reg_dir.join("test.reg"),
     };
     let reg_result = reg_injector
-        .inject(&reg_entries, &reg_target, InjectionStrategy::DirectInjection)
+        .inject(
+            &reg_entries,
+            &reg_target,
+            InjectionStrategy::DirectInjection,
+        )
         .unwrap();
     assert_eq!(reg_result.records_injected, 1);
-    assert!(reg_dir.join("test.reg").exists(), "registry .reg file must exist");
+    assert!(
+        reg_dir.join("test.reg").exists(),
+        "registry .reg file must exist"
+    );
     let reg_content = std::fs::read_to_string(reg_dir.join("test.reg")).unwrap();
     assert!(reg_content.contains("Windows Registry Editor Version 5.00"));
 
@@ -709,11 +703,7 @@ fn windows_injectors_write_to_correct_locations() {
 
     // Verify all results report AllPresent.
     for (name, injector, result) in [
-        (
-            "Prefetch",
-            &pf_injector as &dyn Injector,
-            &pf_result,
-        ),
+        ("Prefetch", &pf_injector as &dyn Injector, &pf_result),
         ("EventLog", &el_injector as &dyn Injector, &el_result),
         ("LNK", &lnk_injector as &dyn Injector, &lnk_result),
         ("RecycleBin", &rb_injector as &dyn Injector, &rb_result),
@@ -908,8 +898,7 @@ fn android_injectors_produce_valid_output() {
     let cp_status = cp_injector.verify(&cp_result).unwrap();
     assert!(matches!(cp_status, VerificationStatus::AllPresent { .. }));
     // Verify content is parseable JSON.
-    let cp_content =
-        std::fs::read_to_string(&cp_result.injected_ids[0]).unwrap();
+    let cp_content = std::fs::read_to_string(&cp_result.injected_ids[0]).unwrap();
     let _: serde_json::Value = serde_json::from_str(&cp_content).unwrap();
 
     // -- SQLite --
@@ -958,9 +947,11 @@ fn android_injectors_produce_valid_output() {
     let sp_status = sp_injector.verify(&sp_result).unwrap();
     assert!(matches!(sp_status, VerificationStatus::AllPresent { .. }));
     // Verify the output is XML.
-    let sp_content =
-        std::fs::read_to_string(&sp_result.injected_ids[0]).unwrap();
-    assert!(sp_content.contains("<map>"), "SharedPrefs output must be XML");
+    let sp_content = std::fs::read_to_string(&sp_result.injected_ids[0]).unwrap();
+    assert!(
+        sp_content.contains("<map>"),
+        "SharedPrefs output must be XML"
+    );
 
     // -- MediaStore --
     let ms_dir = d.join("media_store");
@@ -1048,10 +1039,8 @@ fn ios_injectors_produce_valid_output() {
     let ct_status = ct_injector.verify(&ct_result).unwrap();
     assert!(matches!(ct_status, VerificationStatus::AllPresent { .. }));
     // Verify content is parseable JSON with correct fields.
-    let ct_content =
-        std::fs::read_to_string(&ct_result.injected_ids[0]).unwrap();
-    let ct_val: serde_json::Value =
-        serde_json::from_str(&ct_content).unwrap();
+    let ct_content = std::fs::read_to_string(&ct_result.injected_ids[0]).unwrap();
+    let ct_val: serde_json::Value = serde_json::from_str(&ct_content).unwrap();
     assert_eq!(ct_val["first_name"], "Jane");
     assert_eq!(ct_val["last_name"], "Doe");
 
@@ -1074,15 +1063,17 @@ fn ios_injectors_produce_valid_output() {
         path: cal_dir.clone(),
     };
     let cal_result = cal_injector
-        .inject(&cal_records, &cal_target, InjectionStrategy::DirectInjection)
+        .inject(
+            &cal_records,
+            &cal_target,
+            InjectionStrategy::DirectInjection,
+        )
         .unwrap();
     assert_eq!(cal_result.records_injected, 1);
     let cal_status = cal_injector.verify(&cal_result).unwrap();
     assert!(matches!(cal_status, VerificationStatus::AllPresent { .. }));
-    let cal_content =
-        std::fs::read_to_string(&cal_result.injected_ids[0]).unwrap();
-    let cal_val: serde_json::Value =
-        serde_json::from_str(&cal_content).unwrap();
+    let cal_content = std::fs::read_to_string(&cal_result.injected_ids[0]).unwrap();
+    let cal_val: serde_json::Value = serde_json::from_str(&cal_content).unwrap();
     assert_eq!(cal_val["title"], "Team Standup");
 
     // -- Photos --
@@ -1135,10 +1126,8 @@ fn ios_injectors_produce_valid_output() {
     assert_eq!(sb_result.records_injected, 1);
     let sb_status = sb_injector.verify(&sb_result).unwrap();
     assert!(matches!(sb_status, VerificationStatus::AllPresent { .. }));
-    let sb_content =
-        std::fs::read_to_string(&sb_result.injected_ids[0]).unwrap();
-    let sb_val: serde_json::Value =
-        serde_json::from_str(&sb_content).unwrap();
+    let sb_content = std::fs::read_to_string(&sb_result.injected_ids[0]).unwrap();
+    let sb_val: serde_json::Value = serde_json::from_str(&sb_content).unwrap();
     assert_eq!(sb_val["bundle_id"], "com.example.notes");
     assert_eq!(sb_val["location"], "Documents");
 }

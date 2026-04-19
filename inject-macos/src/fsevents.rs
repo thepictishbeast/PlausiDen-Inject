@@ -45,11 +45,11 @@ impl FsEventFlag {
     /// Map to the raw macOS FSEventStreamEventFlags bitmask value.
     pub fn raw_flag(self) -> u32 {
         match self {
-            Self::Created => 0x0100,    // kFSEventStreamEventFlagItemCreated
-            Self::Modified => 0x1000,   // kFSEventStreamEventFlagItemModified
-            Self::Removed => 0x0200,    // kFSEventStreamEventFlagItemRemoved
-            Self::Renamed => 0x0800,    // kFSEventStreamEventFlagItemRenamed
-            Self::OwnerChange => 0x4000, // kFSEventStreamEventFlagItemChangeOwner
+            Self::Created => 0x0100,       // kFSEventStreamEventFlagItemCreated
+            Self::Modified => 0x1000,      // kFSEventStreamEventFlagItemModified
+            Self::Removed => 0x0200,       // kFSEventStreamEventFlagItemRemoved
+            Self::Renamed => 0x0800,       // kFSEventStreamEventFlagItemRenamed
+            Self::OwnerChange => 0x4000,   // kFSEventStreamEventFlagItemChangeOwner
             Self::XattrModified => 0x8000, // kFSEventStreamEventFlagItemXattrMod
         }
     }

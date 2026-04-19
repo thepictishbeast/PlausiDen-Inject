@@ -1,7 +1,7 @@
 //! Integration tests for Chrome/Chromium history and cookie injection.
 
-use inject_linux::browser_chrome::{CookieRecord, HistoryRecord, ChromeInjector};
-use inject_core::{Injector, InjectionStrategy, Target};
+use inject_core::{InjectionStrategy, Injector, Target};
+use inject_linux::browser_chrome::{ChromeInjector, CookieRecord, HistoryRecord};
 use rusqlite::Connection;
 use tempfile::TempDir;
 
@@ -109,27 +109,42 @@ fn test_inject_chrome_history() {
     let artifact_bytes = serde_json::to_vec(&records).unwrap();
     let result = injector.inject(
         &artifact_bytes,
-        &Target::ChromeHistory { profile_path: dir.path().to_path_buf() },
+        &Target::ChromeHistory {
+            profile_path: dir.path().to_path_buf(),
+        },
         InjectionStrategy::DirectInjection,
     );
 
-    assert!(result.is_ok(), "injection should succeed: {:?}", result.err());
+    assert!(
+        result.is_ok(),
+        "injection should succeed: {:?}",
+        result.err()
+    );
     let result = result.unwrap();
     assert_eq!(result.records_injected, 2);
 
     // Verify data in database
     let conn = Connection::open(dir.path().join("History")).unwrap();
-    let count: i64 = conn.query_row("SELECT COUNT(*) FROM urls", [], |r| r.get(0)).unwrap();
+    let count: i64 = conn
+        .query_row("SELECT COUNT(*) FROM urls", [], |r| r.get(0))
+        .unwrap();
     assert_eq!(count, 2);
 
-    let visits: i64 = conn.query_row("SELECT COUNT(*) FROM visits", [], |r| r.get(0)).unwrap();
+    let visits: i64 = conn
+        .query_row("SELECT COUNT(*) FROM visits", [], |r| r.get(0))
+        .unwrap();
     assert_eq!(visits, 2);
 
     // Verify Chrome epoch conversion (timestamps should be offset from 1601)
     let visit_time: i64 = conn
-        .query_row("SELECT visit_time FROM visits WHERE id = 1", [], |r| r.get(0))
+        .query_row("SELECT visit_time FROM visits WHERE id = 1", [], |r| {
+            r.get(0)
+        })
         .unwrap();
-    assert!(visit_time > 13_000_000_000_000_000, "Chrome timestamps should be offset from 1601");
+    assert!(
+        visit_time > 13_000_000_000_000_000,
+        "Chrome timestamps should be offset from 1601"
+    );
 }
 
 #[test]
@@ -155,17 +170,27 @@ fn test_inject_chrome_cookies() {
     let artifact_bytes = serde_json::to_vec(&records).unwrap();
     let result = injector.inject(
         &artifact_bytes,
-        &Target::ChromeCookies { profile_path: dir.path().to_path_buf() },
+        &Target::ChromeCookies {
+            profile_path: dir.path().to_path_buf(),
+        },
         InjectionStrategy::DirectInjection,
     );
 
-    assert!(result.is_ok(), "cookie injection should succeed: {:?}", result.err());
+    assert!(
+        result.is_ok(),
+        "cookie injection should succeed: {:?}",
+        result.err()
+    );
 
     let conn = Connection::open(dir.path().join("Cookies")).unwrap();
-    let count: i64 = conn.query_row("SELECT COUNT(*) FROM cookies", [], |r| r.get(0)).unwrap();
+    let count: i64 = conn
+        .query_row("SELECT COUNT(*) FROM cookies", [], |r| r.get(0))
+        .unwrap();
     assert_eq!(count, 1);
 
-    let name: String = conn.query_row("SELECT name FROM cookies LIMIT 1", [], |r| r.get(0)).unwrap();
+    let name: String = conn
+        .query_row("SELECT name FROM cookies LIMIT 1", [], |r| r.get(0))
+        .unwrap();
     assert_eq!(name, "_ga");
 }
 
@@ -194,13 +219,19 @@ fn test_chrome_duplicate_url_handling() {
     let artifact_bytes = serde_json::to_vec(&records).unwrap();
     let _ = injector.inject(
         &artifact_bytes,
-        &Target::ChromeHistory { profile_path: dir.path().to_path_buf() },
+        &Target::ChromeHistory {
+            profile_path: dir.path().to_path_buf(),
+        },
         InjectionStrategy::DirectInjection,
     );
 
     let conn = Connection::open(dir.path().join("History")).unwrap();
-    let urls: i64 = conn.query_row("SELECT COUNT(*) FROM urls", [], |r| r.get(0)).unwrap();
-    let visits: i64 = conn.query_row("SELECT COUNT(*) FROM visits", [], |r| r.get(0)).unwrap();
+    let urls: i64 = conn
+        .query_row("SELECT COUNT(*) FROM urls", [], |r| r.get(0))
+        .unwrap();
+    let visits: i64 = conn
+        .query_row("SELECT COUNT(*) FROM visits", [], |r| r.get(0))
+        .unwrap();
 
     // Chrome may create 2 URL entries (INSERT OR IGNORE depends on UNIQUE index)
     // Either way, visits should be 2
@@ -222,11 +253,15 @@ fn test_chrome_backup_created() {
     }];
 
     let artifact_bytes = serde_json::to_vec(&records).unwrap();
-    let result = injector.inject(
-        &artifact_bytes,
-        &Target::ChromeHistory { profile_path: dir.path().to_path_buf() },
-        InjectionStrategy::DirectInjection,
-    ).unwrap();
+    let result = injector
+        .inject(
+            &artifact_bytes,
+            &Target::ChromeHistory {
+                profile_path: dir.path().to_path_buf(),
+            },
+            InjectionStrategy::DirectInjection,
+        )
+        .unwrap();
 
     assert!(result.backup_path.is_some(), "backup should be created");
 }

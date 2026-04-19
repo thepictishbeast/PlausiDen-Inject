@@ -173,19 +173,16 @@ fn discover_subdirs(root: &Path) -> Vec<PathBuf> {
 /// Return the user's home directory.
 fn dirs_home() -> Option<PathBuf> {
     // Prefer $HOME; fall back to platform-specific lookup.
-    std::env::var("HOME")
-        .ok()
-        .map(PathBuf::from)
-        .or_else(|| {
-            #[cfg(target_os = "windows")]
-            {
-                std::env::var("USERPROFILE").ok().map(PathBuf::from)
-            }
-            #[cfg(not(target_os = "windows"))]
-            {
-                None
-            }
-        })
+    std::env::var("HOME").ok().map(PathBuf::from).or_else(|| {
+        #[cfg(target_os = "windows")]
+        {
+            std::env::var("USERPROFILE").ok().map(PathBuf::from)
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            None
+        }
+    })
 }
 
 #[cfg(test)]

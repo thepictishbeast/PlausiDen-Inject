@@ -18,9 +18,7 @@
 
 use chrono::{DateTime, Utc};
 use inject_core::error::{InjectError, Result};
-use inject_core::{
-    InjectionResult, InjectionStrategy, Injector, Target, VerificationStatus,
-};
+use inject_core::{InjectionResult, InjectionStrategy, Injector, Target, VerificationStatus};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io::Write;
@@ -200,11 +198,7 @@ impl LogInjector {
 
     /// Inject records by appending formatted lines directly to log files.
     /// Groups records by facility so each target file gets a single backup.
-    fn inject_direct(
-        &self,
-        records: &[LogRecord],
-        target: &Target,
-    ) -> Result<InjectionResult> {
+    fn inject_direct(&self, records: &[LogRecord], target: &Target) -> Result<InjectionResult> {
         let run_id = Uuid::new_v4();
         let mut injected_ids = Vec::with_capacity(records.len());
         let mut first_backup: Option<PathBuf> = None;
@@ -386,20 +380,16 @@ impl Injector for LogInjector {
         match strategy {
             InjectionStrategy::DirectInjection => self.inject_direct(&records, target),
             InjectionStrategy::Hybrid => self.inject_via_logger(&records),
-            InjectionStrategy::TranslatorInterposition => {
-                Err(InjectError::UnsupportedStrategy {
-                    strategy: strategy.to_string(),
-                    target: target.to_string(),
-                })
-            }
+            InjectionStrategy::TranslatorInterposition => Err(InjectError::UnsupportedStrategy {
+                strategy: strategy.to_string(),
+                target: target.to_string(),
+            }),
         }
     }
 
     fn verify(&self, result: &InjectionResult) -> Result<VerificationStatus> {
         match &result.target {
-            Target::LogFile { path } => {
-                self.verify_log_file(path, &result.injected_ids)
-            }
+            Target::LogFile { path } => self.verify_log_file(path, &result.injected_ids),
             other => Err(InjectError::UnsupportedTarget {
                 description: format!("LogInjector cannot verify {other}"),
             }),
@@ -451,7 +441,10 @@ impl Injector for LogInjector {
     }
 
     fn supported_strategies(&self) -> Vec<InjectionStrategy> {
-        vec![InjectionStrategy::DirectInjection, InjectionStrategy::Hybrid]
+        vec![
+            InjectionStrategy::DirectInjection,
+            InjectionStrategy::Hybrid,
+        ]
     }
 }
 
@@ -850,8 +843,7 @@ mod tests {
         let log_path = dir.path().join("full-cycle.log");
         fs::write(&log_path, "baseline\n").unwrap();
 
-        let injector =
-            LogInjector::with_hostname_and_dir("cyclehost", dir.path().to_path_buf());
+        let injector = LogInjector::with_hostname_and_dir("cyclehost", dir.path().to_path_buf());
         let records = vec![
             sample_record("auth", "sshd", "session opened for testuser"),
             sample_record("cron", "CRON", "(root) CMD (/usr/bin/apt update)"),

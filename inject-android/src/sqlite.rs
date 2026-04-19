@@ -30,7 +30,10 @@ pub struct AndroidSqliteRecord {
 impl AndroidSqliteRecord {
     /// Derive a stable filename for this record.
     pub fn filename(&self, index: usize) -> String {
-        format!("{}_{}_{}_{index}.json", self.package_name, self.database_name, self.table_name)
+        format!(
+            "{}_{}_{}_{index}.json",
+            self.package_name, self.database_name, self.table_name
+        )
     }
 }
 
@@ -39,13 +42,22 @@ pub struct AndroidSqliteInjector {
 }
 
 impl AndroidSqliteInjector {
-    pub fn new(output_dir: PathBuf) -> Self { Self { output_dir } }
+    pub fn new(output_dir: PathBuf) -> Self {
+        Self { output_dir }
+    }
 }
 
 impl Injector for AndroidSqliteInjector {
-    fn inject(&self, artifact_bytes: &[u8], _target: &Target, _strategy: InjectionStrategy) -> Result<InjectionResult> {
+    fn inject(
+        &self,
+        artifact_bytes: &[u8],
+        _target: &Target,
+        _strategy: InjectionStrategy,
+    ) -> Result<InjectionResult> {
         let records: Vec<AndroidSqliteRecord> = serde_json::from_slice(artifact_bytes)?;
-        if records.is_empty() { return Err(InjectError::EmptyArtifact); }
+        if records.is_empty() {
+            return Err(InjectError::EmptyArtifact);
+        }
 
         std::fs::create_dir_all(&self.output_dir).map_err(InjectError::Io)?;
 
@@ -54,14 +66,17 @@ impl Injector for AndroidSqliteInjector {
 
         for (i, record) in records.iter().enumerate() {
             let path = self.output_dir.join(record.filename(i));
-            let data = serde_json::to_vec_pretty(record).map_err(|e| InjectError::Other(e.to_string()))?;
+            let data =
+                serde_json::to_vec_pretty(record).map_err(|e| InjectError::Other(e.to_string()))?;
             std::fs::write(&path, &data).map_err(InjectError::Io)?;
             injected_ids.push(path.to_string_lossy().to_string());
         }
 
         Ok(InjectionResult {
             run_id,
-            target: Target::Filesystem { path: self.output_dir.clone() },
+            target: Target::Filesystem {
+                path: self.output_dir.clone(),
+            },
             strategy: InjectionStrategy::DirectInjection,
             records_injected: records.len(),
             backup_path: None,
@@ -73,14 +88,22 @@ impl Injector for AndroidSqliteInjector {
     fn verify(&self, result: &InjectionResult) -> Result<VerificationStatus> {
         let mut present = 0;
         for path in &result.injected_ids {
-            if std::path::Path::new(path).exists() { present += 1; }
+            if std::path::Path::new(path).exists() {
+                present += 1;
+            }
         }
         if present == result.injected_ids.len() {
             Ok(VerificationStatus::AllPresent { checked: present })
         } else if present > 0 {
-            Ok(VerificationStatus::PartiallyPresent { present, missing: result.injected_ids.len() - present, missing_ids: vec![] })
+            Ok(VerificationStatus::PartiallyPresent {
+                present,
+                missing: result.injected_ids.len() - present,
+                missing_ids: vec![],
+            })
         } else {
-            Ok(VerificationStatus::NonePresent { expected: result.injected_ids.len() })
+            Ok(VerificationStatus::NonePresent {
+                expected: result.injected_ids.len(),
+            })
         }
     }
 
@@ -92,7 +115,9 @@ impl Injector for AndroidSqliteInjector {
     }
 
     fn available_targets(&self) -> Vec<Target> {
-        vec![Target::Filesystem { path: self.output_dir.clone() }]
+        vec![Target::Filesystem {
+            path: self.output_dir.clone(),
+        }]
     }
 
     fn supported_strategies(&self) -> Vec<InjectionStrategy> {
@@ -124,9 +149,20 @@ mod tests {
         let dir = TempDir::new().unwrap();
         let injector = AndroidSqliteInjector::new(dir.path().to_path_buf());
         let bytes = serde_json::to_vec(&sample_records()).unwrap();
-        let result = injector.inject(&bytes, &Target::Filesystem { path: dir.path().into() }, InjectionStrategy::DirectInjection).unwrap();
+        let result = injector
+            .inject(
+                &bytes,
+                &Target::Filesystem {
+                    path: dir.path().into(),
+                },
+                InjectionStrategy::DirectInjection,
+            )
+            .unwrap();
         assert_eq!(result.records_injected, 1);
-        assert!(matches!(injector.verify(&result).unwrap(), VerificationStatus::AllPresent { .. }));
+        assert!(matches!(
+            injector.verify(&result).unwrap(),
+            VerificationStatus::AllPresent { .. }
+        ));
     }
 
     #[test]
@@ -134,8 +170,19 @@ mod tests {
         let dir = TempDir::new().unwrap();
         let injector = AndroidSqliteInjector::new(dir.path().to_path_buf());
         let bytes = serde_json::to_vec(&sample_records()).unwrap();
-        let result = injector.inject(&bytes, &Target::Filesystem { path: dir.path().into() }, InjectionStrategy::DirectInjection).unwrap();
+        let result = injector
+            .inject(
+                &bytes,
+                &Target::Filesystem {
+                    path: dir.path().into(),
+                },
+                InjectionStrategy::DirectInjection,
+            )
+            .unwrap();
         injector.rollback(&result).unwrap();
-        assert!(matches!(injector.verify(&result).unwrap(), VerificationStatus::NonePresent { .. }));
+        assert!(matches!(
+            injector.verify(&result).unwrap(),
+            VerificationStatus::NonePresent { .. }
+        ));
     }
 }

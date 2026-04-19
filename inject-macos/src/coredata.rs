@@ -178,7 +178,14 @@ impl CoreDataInjector {
 
         let injected_ids: Vec<String> = records
             .iter()
-            .map(|r| format!("{}::{}::{}", output_file.display(), r.entity_name, r.object_id))
+            .map(|r| {
+                format!(
+                    "{}::{}::{}",
+                    output_file.display(),
+                    r.entity_name,
+                    r.object_id
+                )
+            })
             .collect();
 
         tracing::info!(
@@ -295,9 +302,7 @@ impl Injector for CoreDataInjector {
             targets.push(Target::Filesystem { path: dir.clone() });
         } else if let Ok(home) = std::env::var("HOME") {
             // Common CoreData store locations on macOS.
-            let containers = PathBuf::from(&home)
-                .join("Library")
-                .join("Containers");
+            let containers = PathBuf::from(&home).join("Library").join("Containers");
             targets.push(Target::Filesystem { path: containers });
         }
 

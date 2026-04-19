@@ -4,8 +4,8 @@
 //! artifacts, then verifies the injected data is present and correctly
 //! formatted — indistinguishable from real Firefox entries.
 
+use inject_core::{InjectionStrategy, Injector, Target};
 use inject_linux::browser_firefox::{CookieRecord, FirefoxInjector, HistoryRecord};
-use inject_core::{Injector, InjectionStrategy, Target};
 use rusqlite::Connection;
 use std::path::PathBuf;
 use tempfile::TempDir;
@@ -97,7 +97,7 @@ fn test_inject_history_into_real_schema() {
             url: "https://www.example.com/page1".to_string(),
             title: Some("Example Page 1".to_string()),
             visit_date_us: 1700000000_000000, // microseconds
-            visit_type: 1, // TRANSITION_LINK
+            visit_type: 1,                    // TRANSITION_LINK
             frecency: 100,
         },
         HistoryRecord {
@@ -112,11 +112,17 @@ fn test_inject_history_into_real_schema() {
     let artifact_bytes = serde_json::to_vec(&records).unwrap();
     let result = injector.inject(
         &artifact_bytes,
-        &Target::FirefoxHistory { profile_path: dir.path().to_path_buf() },
+        &Target::FirefoxHistory {
+            profile_path: dir.path().to_path_buf(),
+        },
         InjectionStrategy::DirectInjection,
     );
 
-    assert!(result.is_ok(), "injection should succeed: {:?}", result.err());
+    assert!(
+        result.is_ok(),
+        "injection should succeed: {:?}",
+        result.err()
+    );
     let result = result.unwrap();
     assert_eq!(result.records_injected, 2);
 
@@ -135,11 +141,7 @@ fn test_inject_history_into_real_schema() {
 
     // Verify the URLs are correct
     let url: String = conn
-        .query_row(
-            "SELECT url FROM moz_places WHERE id = 1",
-            [],
-            |r| r.get(0),
-        )
+        .query_row("SELECT url FROM moz_places WHERE id = 1", [], |r| r.get(0))
         .unwrap();
     assert_eq!(url, "https://www.example.com/page1");
 
@@ -187,11 +189,17 @@ fn test_inject_cookies_into_real_schema() {
     let artifact_bytes = serde_json::to_vec(&records).unwrap();
     let result = injector.inject(
         &artifact_bytes,
-        &Target::FirefoxCookies { profile_path: dir.path().to_path_buf() },
+        &Target::FirefoxCookies {
+            profile_path: dir.path().to_path_buf(),
+        },
         InjectionStrategy::DirectInjection,
     );
 
-    assert!(result.is_ok(), "cookie injection should succeed: {:?}", result.err());
+    assert!(
+        result.is_ok(),
+        "cookie injection should succeed: {:?}",
+        result.err()
+    );
 
     // Verify cookies are in the database
     let conn = Connection::open(dir.path().join("cookies.sqlite")).unwrap();
@@ -240,22 +248,32 @@ fn test_inject_duplicate_url_updates_visit_count() {
     let artifact_bytes = serde_json::to_vec(&records).unwrap();
     let _ = injector.inject(
         &artifact_bytes,
-        &Target::FirefoxHistory { profile_path: dir.path().to_path_buf() },
+        &Target::FirefoxHistory {
+            profile_path: dir.path().to_path_buf(),
+        },
         InjectionStrategy::DirectInjection,
     );
 
     let conn = Connection::open(dir.path().join("places.sqlite")).unwrap();
 
     // Should have 1 place but 2 visits
-    let places: i64 = conn.query_row("SELECT COUNT(*) FROM moz_places", [], |r| r.get(0)).unwrap();
-    let visits: i64 = conn.query_row("SELECT COUNT(*) FROM moz_historyvisits", [], |r| r.get(0)).unwrap();
+    let places: i64 = conn
+        .query_row("SELECT COUNT(*) FROM moz_places", [], |r| r.get(0))
+        .unwrap();
+    let visits: i64 = conn
+        .query_row("SELECT COUNT(*) FROM moz_historyvisits", [], |r| r.get(0))
+        .unwrap();
 
     assert_eq!(places, 1, "duplicate URL should not create duplicate place");
     assert_eq!(visits, 2, "each visit should be recorded");
 
     // Visit count should reflect both visits
     let vc: i64 = conn
-        .query_row("SELECT visit_count FROM moz_places WHERE url = ?1", ["https://www.example.com"], |r| r.get(0))
+        .query_row(
+            "SELECT visit_count FROM moz_places WHERE url = ?1",
+            ["https://www.example.com"],
+            |r| r.get(0),
+        )
         .unwrap();
     assert!(vc >= 2, "visit_count should be at least 2, got {vc}");
 }
@@ -276,11 +294,15 @@ fn test_injection_creates_backup() {
     }];
 
     let artifact_bytes = serde_json::to_vec(&records).unwrap();
-    let result = injector.inject(
-        &artifact_bytes,
-        &Target::FirefoxHistory { profile_path: dir.path().to_path_buf() },
-        InjectionStrategy::DirectInjection,
-    ).unwrap();
+    let result = injector
+        .inject(
+            &artifact_bytes,
+            &Target::FirefoxHistory {
+                profile_path: dir.path().to_path_buf(),
+            },
+            InjectionStrategy::DirectInjection,
+        )
+        .unwrap();
 
     // A backup should have been created
     assert!(result.backup_path.is_some(), "backup should be created");
@@ -298,7 +320,9 @@ fn test_rollback_restores_original() {
 
     // Get original state
     let conn = Connection::open(dir.path().join("places.sqlite")).unwrap();
-    let original_count: i64 = conn.query_row("SELECT COUNT(*) FROM moz_places", [], |r| r.get(0)).unwrap();
+    let original_count: i64 = conn
+        .query_row("SELECT COUNT(*) FROM moz_places", [], |r| r.get(0))
+        .unwrap();
     drop(conn);
 
     // Inject
@@ -311,15 +335,21 @@ fn test_rollback_restores_original() {
     }];
 
     let artifact_bytes = serde_json::to_vec(&records).unwrap();
-    let result = injector.inject(
-        &artifact_bytes,
-        &Target::FirefoxHistory { profile_path: dir.path().to_path_buf() },
-        InjectionStrategy::DirectInjection,
-    ).unwrap();
+    let result = injector
+        .inject(
+            &artifact_bytes,
+            &Target::FirefoxHistory {
+                profile_path: dir.path().to_path_buf(),
+            },
+            InjectionStrategy::DirectInjection,
+        )
+        .unwrap();
 
     // Verify injection happened
     let conn = Connection::open(dir.path().join("places.sqlite")).unwrap();
-    let injected_count: i64 = conn.query_row("SELECT COUNT(*) FROM moz_places", [], |r| r.get(0)).unwrap();
+    let injected_count: i64 = conn
+        .query_row("SELECT COUNT(*) FROM moz_places", [], |r| r.get(0))
+        .unwrap();
     assert_eq!(injected_count, original_count + 1);
     drop(conn);
 
@@ -329,6 +359,11 @@ fn test_rollback_restores_original() {
 
     // Verify rollback restored original
     let conn = Connection::open(dir.path().join("places.sqlite")).unwrap();
-    let restored_count: i64 = conn.query_row("SELECT COUNT(*) FROM moz_places", [], |r| r.get(0)).unwrap();
-    assert_eq!(restored_count, original_count, "rollback should restore original state");
+    let restored_count: i64 = conn
+        .query_row("SELECT COUNT(*) FROM moz_places", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(
+        restored_count, original_count,
+        "rollback should restore original state"
+    );
 }

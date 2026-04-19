@@ -5,8 +5,8 @@
 //! appear correctly in the database.
 
 use inject_core::sanitizer;
-use inject_linux::browser_firefox::{FirefoxInjector, HistoryRecord, CookieRecord};
-use inject_core::{Injector, InjectionStrategy, Target};
+use inject_core::{InjectionStrategy, Injector, Target};
+use inject_linux::browser_firefox::{CookieRecord, FirefoxInjector, HistoryRecord};
 use rusqlite::Connection;
 use tempfile::TempDir;
 
@@ -26,20 +26,23 @@ fn create_firefox_db(dir: &std::path::Path) {
             visit_date INTEGER, visit_type INTEGER, session INTEGER
         );
         CREATE UNIQUE INDEX moz_places_url_uniqueindex ON moz_places(url);
-        CREATE UNIQUE INDEX moz_places_guid_uniqueindex ON moz_places(guid);"
-    ).unwrap();
+        CREATE UNIQUE INDEX moz_places_guid_uniqueindex ON moz_places(guid);",
+    )
+    .unwrap();
 
     let conn2 = Connection::open(dir.join("cookies.sqlite")).unwrap();
-    conn2.execute_batch(
-        "CREATE TABLE moz_cookies (
+    conn2
+        .execute_batch(
+            "CREATE TABLE moz_cookies (
             id INTEGER PRIMARY KEY, originAttributes TEXT DEFAULT '',
             name TEXT, value TEXT, host TEXT, path TEXT, expiry INTEGER,
             lastAccessed INTEGER, creationTime INTEGER, isSecure INTEGER,
             isHttpOnly INTEGER, inBrowserElement INTEGER DEFAULT 0,
             sameSite INTEGER DEFAULT 0, rawSameSite INTEGER DEFAULT 0,
             schemeMap INTEGER DEFAULT 0
-        );"
-    ).unwrap();
+        );",
+        )
+        .unwrap();
 }
 
 /// Test: Generate engine-format artifacts → sanitize → inject → verify
@@ -85,19 +88,23 @@ fn test_engine_to_inject_pipeline() {
 
     // Inject
     let injector = FirefoxInjector::with_profiles(vec![dir.path().to_path_buf()]);
-    let result = injector.inject(
-        &inject_bytes,
-        &Target::FirefoxHistory { profile_path: dir.path().to_path_buf() },
-        InjectionStrategy::DirectInjection,
-    ).unwrap();
+    let result = injector
+        .inject(
+            &inject_bytes,
+            &Target::FirefoxHistory {
+                profile_path: dir.path().to_path_buf(),
+            },
+            InjectionStrategy::DirectInjection,
+        )
+        .unwrap();
 
     assert_eq!(result.records_injected, 1);
 
     // Verify in database
     let conn = Connection::open(dir.path().join("places.sqlite")).unwrap();
-    let url: String = conn.query_row(
-        "SELECT url FROM moz_places LIMIT 1", [], |r| r.get(0)
-    ).unwrap();
+    let url: String = conn
+        .query_row("SELECT url FROM moz_places LIMIT 1", [], |r| r.get(0))
+        .unwrap();
     assert_eq!(url, "https://www.rust-lang.org/learn");
 }
 
@@ -117,8 +124,14 @@ fn test_sanitizer_strips_all_markers() {
 
     let parsed: serde_json::Value = serde_json::from_slice(&sanitized).unwrap();
     assert!(parsed.get("meta").is_none(), "meta should be stripped");
-    assert!(parsed.get("artifact_id").is_none(), "artifact_id should be stripped");
-    assert!(parsed.get("generation_context").is_none(), "generation_context should be stripped");
+    assert!(
+        parsed.get("artifact_id").is_none(),
+        "artifact_id should be stripped"
+    );
+    assert!(
+        parsed.get("generation_context").is_none(),
+        "generation_context should be stripped"
+    );
     assert!(parsed.get("url").is_some(), "url should be preserved");
 }
 
@@ -128,31 +141,35 @@ fn test_cookie_injection_roundtrip() {
     let dir = TempDir::new().unwrap();
     create_firefox_db(dir.path());
 
-    let records = vec![
-        CookieRecord {
-            name: "_ga".to_string(),
-            value: "GA1.2.123456.789012".to_string(),
-            host: ".rust-lang.org".to_string(),
-            path: "/".to_string(),
-            expiry: 1800000000,
-            is_secure: true,
-            is_http_only: false,
-            same_site: 0,
-        },
-    ];
+    let records = vec![CookieRecord {
+        name: "_ga".to_string(),
+        value: "GA1.2.123456.789012".to_string(),
+        host: ".rust-lang.org".to_string(),
+        path: "/".to_string(),
+        expiry: 1800000000,
+        is_secure: true,
+        is_http_only: false,
+        same_site: 0,
+    }];
 
     let bytes = serde_json::to_vec(&records).unwrap();
     let injector = FirefoxInjector::with_profiles(vec![dir.path().to_path_buf()]);
 
-    let result = injector.inject(
-        &bytes,
-        &Target::FirefoxCookies { profile_path: dir.path().to_path_buf() },
-        InjectionStrategy::DirectInjection,
-    ).unwrap();
+    let result = injector
+        .inject(
+            &bytes,
+            &Target::FirefoxCookies {
+                profile_path: dir.path().to_path_buf(),
+            },
+            InjectionStrategy::DirectInjection,
+        )
+        .unwrap();
 
     assert_eq!(result.records_injected, 1);
 
     let conn = Connection::open(dir.path().join("cookies.sqlite")).unwrap();
-    let name: String = conn.query_row("SELECT name FROM moz_cookies LIMIT 1", [], |r| r.get(0)).unwrap();
+    let name: String = conn
+        .query_row("SELECT name FROM moz_cookies LIMIT 1", [], |r| r.get(0))
+        .unwrap();
     assert_eq!(name, "_ga");
 }

@@ -60,7 +60,9 @@ pub struct ScrubReport {
 impl ScrubReport {
     pub fn success_rate(&self) -> f64 {
         let total = self.fields_scrubbed.len() + self.fields_failed.len();
-        if total == 0 { return 1.0; }
+        if total == 0 {
+            return 1.0;
+        }
         self.fields_scrubbed.len() as f64 / total as f64
     }
 }
@@ -137,7 +139,9 @@ impl AttributionScrubber {
         let mut failed = Vec::new();
 
         for rule in &self.rules {
-            if !rule.enabled { continue; }
+            if !rule.enabled {
+                continue;
+            }
             let field_key = match &rule.target {
                 ScrubTarget::OwnerUid => "owner_uid".to_string(),
                 ScrubTarget::OwnerGid => "owner_gid".to_string(),
@@ -187,17 +191,23 @@ impl AttributionScrubber {
 
     /// Overall success rate across reports.
     pub fn overall_success_rate(&self) -> f64 {
-        if self.reports.is_empty() { return 1.0; }
+        if self.reports.is_empty() {
+            return 1.0;
+        }
         let total_scrubbed: usize = self.reports.iter().map(|r| r.fields_scrubbed.len()).sum();
         let total_failed: usize = self.reports.iter().map(|r| r.fields_failed.len()).sum();
         let total = total_scrubbed + total_failed;
-        if total == 0 { return 1.0; }
+        if total == 0 {
+            return 1.0;
+        }
         total_scrubbed as f64 / total as f64
     }
 }
 
 impl Default for AttributionScrubber {
-    fn default() -> Self { Self::default_rules() }
+    fn default() -> Self {
+        Self::default_rules()
+    }
 }
 
 #[cfg(test)]

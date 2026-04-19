@@ -343,7 +343,8 @@ pub fn create_shellbag_entries(folder_paths: &[String]) -> Vec<RegistryEntry> {
 /// Stored under
 /// `HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs`.
 pub fn create_recentdocs_entries(filenames: &[String]) -> Vec<RegistryEntry> {
-    let base_key = r"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs";
+    let base_key =
+        r"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs";
 
     let mut entries = Vec::with_capacity(filenames.len() + 1);
 
@@ -724,7 +725,10 @@ mod tests {
         let output = generate_reg_file(&entries);
 
         // Default value uses @ sigil.
-        assert!(output.contains("@=\"default\""), "default value should use @");
+        assert!(
+            output.contains("@=\"default\""),
+            "default value should use @"
+        );
 
         // QWORD: little-endian hex bytes.
         assert!(
@@ -739,10 +743,7 @@ mod tests {
         );
 
         // Multi-string uses hex(7).
-        assert!(
-            output.contains("hex(7):"),
-            "multi-string should use hex(7)"
-        );
+        assert!(output.contains("hex(7):"), "multi-string should use hex(7)");
 
         // REG_NONE uses hex(0).
         assert!(output.contains("hex(0):"), "REG_NONE should use hex(0)");

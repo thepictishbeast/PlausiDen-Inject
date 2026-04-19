@@ -29,7 +29,11 @@ pub fn rollback_injection(result: &InjectionResult) -> Result<()> {
 fn restore_backup(backup: &std::path::Path, target: &Target) -> Result<()> {
     let dest = target_db_path(target)?;
     std::fs::copy(backup, &dest).map_err(|e| InjectError::RollbackFailed {
-        reason: format!("failed to restore backup {} -> {}: {e}", backup.display(), dest.display()),
+        reason: format!(
+            "failed to restore backup {} -> {}: {e}",
+            backup.display(),
+            dest.display()
+        ),
     })?;
     tracing::info!(
         backup = %backup.display(),
@@ -69,15 +73,11 @@ fn rollback_params(target: &Target) -> Result<(std::path::PathBuf, &'static str,
         Target::FirefoxCookies { profile_path } => {
             Ok((profile_path.join("cookies.sqlite"), "moz_cookies", "id"))
         }
-        Target::ChromeHistory { profile_path } => {
-            Ok((profile_path.join("History"), "urls", "id"))
-        }
+        Target::ChromeHistory { profile_path } => Ok((profile_path.join("History"), "urls", "id")),
         Target::ChromeCookies { profile_path } => {
             Ok((profile_path.join("Cookies"), "cookies", "creation_utc"))
         }
-        Target::SafariHistory { db_path } => {
-            Ok((db_path.clone(), "history_items", "id"))
-        }
+        Target::SafariHistory { db_path } => Ok((db_path.clone(), "history_items", "id")),
         other => Err(InjectError::UnsupportedTarget {
             description: format!("rollback not implemented for {other}"),
         }),

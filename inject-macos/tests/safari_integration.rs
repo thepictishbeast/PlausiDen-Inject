@@ -6,7 +6,7 @@
 
 use inject_core::{InjectionStrategy, Injector, Target};
 use inject_macos::browser_safari::{
-    coredata_to_unix, unix_to_coredata, SafariHistoryRecord, SafariInjector,
+    SafariHistoryRecord, SafariInjector, coredata_to_unix, unix_to_coredata,
 };
 use rusqlite::Connection;
 use std::path::PathBuf;
@@ -161,11 +161,9 @@ fn test_coredata_timestamps_correct() {
 
     let conn = Connection::open(&db_path).unwrap();
     let stored_time: f64 = conn
-        .query_row(
-            "SELECT visit_time FROM history_visits LIMIT 1",
-            [],
-            |r| r.get(0),
-        )
+        .query_row("SELECT visit_time FROM history_visits LIMIT 1", [], |r| {
+            r.get(0)
+        })
         .unwrap();
 
     assert!(
@@ -175,7 +173,10 @@ fn test_coredata_timestamps_correct() {
 
     // Round-trip check.
     let roundtrip = coredata_to_unix(stored_time);
-    assert_eq!(roundtrip, unix_ts, "round-trip should recover original Unix timestamp");
+    assert_eq!(
+        roundtrip, unix_ts,
+        "round-trip should recover original Unix timestamp"
+    );
 }
 
 #[test]

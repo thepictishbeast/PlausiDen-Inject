@@ -134,10 +134,7 @@ impl Injector for FilesystemInjector {
             injected_ids.push(created_path.to_string_lossy().into_owned());
         }
 
-        tracing::info!(
-            records = artifacts.len(),
-            "filesystem injection complete"
-        );
+        tracing::info!(records = artifacts.len(), "filesystem injection complete");
 
         Ok(InjectionResult {
             run_id,
@@ -342,9 +339,7 @@ mod tests {
         let payload = serde_json::to_vec(&artifacts).unwrap();
         let target = make_target(tmp.path());
 
-        let result = injector
-            .inject(&payload, &target, DirectInjection)
-            .unwrap();
+        let result = injector.inject(&payload, &target, DirectInjection).unwrap();
 
         let created = PathBuf::from(&result.injected_ids[0]);
         assert!(created.exists());
@@ -381,10 +376,7 @@ mod tests {
             .unwrap();
 
         let status = injector.verify(&result).unwrap();
-        assert_eq!(
-            status,
-            VerificationStatus::AllPresent { checked: 1 }
-        );
+        assert_eq!(status, VerificationStatus::AllPresent { checked: 1 });
     }
 
     #[test]
@@ -403,10 +395,7 @@ mod tests {
         std::fs::remove_file(&created).unwrap();
 
         let status = injector.verify(&result).unwrap();
-        assert_eq!(
-            status,
-            VerificationStatus::NonePresent { expected: 1 }
-        );
+        assert_eq!(status, VerificationStatus::NonePresent { expected: 1 });
     }
 
     #[test]
@@ -417,7 +406,11 @@ mod tests {
         let target = make_target(tmp.path());
 
         let err = injector
-            .inject(&artifact, &target, InjectionStrategy::TranslatorInterposition)
+            .inject(
+                &artifact,
+                &target,
+                InjectionStrategy::TranslatorInterposition,
+            )
             .unwrap_err();
 
         assert!(
@@ -464,11 +457,7 @@ mod tests {
         let entries: Vec<_> = std::fs::read_dir(tmp.path())
             .unwrap()
             .filter_map(|e| e.ok())
-            .filter(|e| {
-                e.file_name()
-                    .to_string_lossy()
-                    .contains("plausiden-backup")
-            })
+            .filter(|e| e.file_name().to_string_lossy().contains("plausiden-backup"))
             .collect();
         assert!(
             !entries.is_empty(),

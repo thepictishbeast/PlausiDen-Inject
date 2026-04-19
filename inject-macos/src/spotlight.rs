@@ -254,9 +254,7 @@ impl Injector for SpotlightInjector {
             });
         } else if let Ok(home) = std::env::var("HOME") {
             // Standard macOS Spotlight store location.
-            let spotlight_dir = PathBuf::from(&home)
-                .join("Library")
-                .join(".Spotlight-V100");
+            let spotlight_dir = PathBuf::from(&home).join("Library").join(".Spotlight-V100");
             targets.push(Target::MacosSpotlight {
                 store_path: spotlight_dir,
             });

@@ -11,11 +11,11 @@
 //! This module writes directly into those databases using `rusqlite`.
 
 use chrono::Utc;
-use inject_core::{
-    InjectionResult, InjectionStrategy, InjectionStrategy::DirectInjection, Injector,
-    Target, VerificationStatus,
-};
 use inject_core::error::{InjectError, Result};
+use inject_core::{
+    InjectionResult, InjectionStrategy, InjectionStrategy::DirectInjection, Injector, Target,
+    VerificationStatus,
+};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
@@ -372,10 +372,7 @@ fn url_hash(url: &str) -> i64 {
 /// Create a backup copy of a database file, returning the backup path.
 fn backup_database(db_path: &Path) -> Result<PathBuf> {
     let timestamp = Utc::now().format("%Y%m%d%H%M%S");
-    let file_name = db_path
-        .file_name()
-        .and_then(|n| n.to_str())
-        .unwrap_or("db");
+    let file_name = db_path.file_name().and_then(|n| n.to_str()).unwrap_or("db");
     let backup_name = format!("{file_name}.plausiden-backup.{timestamp}");
     let backup_path = db_path.with_file_name(backup_name);
 

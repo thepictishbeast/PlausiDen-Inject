@@ -183,9 +183,7 @@ impl MacosFilesystemInjector {
             .collect();
 
         let json = serde_json::to_string_pretty(&stored).map_err(|e| {
-            InjectError::Serialization(format!(
-                "failed to serialize macOS filesystem records: {e}"
-            ))
+            InjectError::Serialization(format!("failed to serialize macOS filesystem records: {e}"))
         })?;
         fs::write(&output_file, &json)?;
 
@@ -436,10 +434,7 @@ mod tests {
 
         // photo.jpg has a resource fork; it should appear as an xattr.
         assert!(stored.xattrs.contains_key("com.apple.ResourceFork"));
-        assert_eq!(
-            stored.xattrs["com.apple.ResourceFork"],
-            "AAAAAABBBBBB"
-        );
+        assert_eq!(stored.xattrs["com.apple.ResourceFork"], "AAAAAABBBBBB");
     }
 
     #[test]
@@ -448,9 +443,11 @@ mod tests {
         let stored = MacosFileStoredRecord::from_record(&records[0]);
 
         // report.pdf has a Spotlight comment; it should appear as an xattr.
-        assert!(stored
-            .xattrs
-            .contains_key("com.apple.metadata:kMDItemFinderComment"));
+        assert!(
+            stored
+                .xattrs
+                .contains_key("com.apple.metadata:kMDItemFinderComment")
+        );
         assert_eq!(
             stored.xattrs["com.apple.metadata:kMDItemFinderComment"],
             "Q4 financial report"

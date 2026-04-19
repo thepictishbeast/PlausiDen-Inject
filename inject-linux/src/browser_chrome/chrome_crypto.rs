@@ -19,7 +19,7 @@
 //! - The ciphertext is prefixed with `b"v10"` before storage.
 
 use aes::Aes128;
-use cbc::cipher::{block_padding::Pkcs7, BlockEncryptMut, KeyIvInit};
+use cbc::cipher::{BlockEncryptMut, KeyIvInit, block_padding::Pkcs7};
 use inject_core::error::{InjectError, Result};
 
 type Aes128CbcEnc = cbc::Encryptor<Aes128>;
@@ -104,7 +104,13 @@ mod tests {
     fn encrypted_value_is_block_aligned() {
         // AES block size is 16 bytes. With PKCS7 padding, the ciphertext
         // (excluding the "v10" prefix) must be a multiple of 16.
-        for input in &["", "x", "short", "exactly16chars!!", "a]longer value that spans multiple blocks!"] {
+        for input in &[
+            "",
+            "x",
+            "short",
+            "exactly16chars!!",
+            "a]longer value that spans multiple blocks!",
+        ] {
             let encrypted = encrypt_cookie_value(input).unwrap();
             let ciphertext_len = encrypted.len() - VERSION_PREFIX.len();
             assert_eq!(
@@ -126,9 +132,18 @@ mod tests {
         let enc_b = encrypt_cookie_value("value_bravo").unwrap();
         let enc_c = encrypt_cookie_value("value_charlie").unwrap();
 
-        assert_ne!(enc_a, enc_b, "different inputs must produce different ciphertexts");
-        assert_ne!(enc_b, enc_c, "different inputs must produce different ciphertexts");
-        assert_ne!(enc_a, enc_c, "different inputs must produce different ciphertexts");
+        assert_ne!(
+            enc_a, enc_b,
+            "different inputs must produce different ciphertexts"
+        );
+        assert_ne!(
+            enc_b, enc_c,
+            "different inputs must produce different ciphertexts"
+        );
+        assert_ne!(
+            enc_a, enc_c,
+            "different inputs must produce different ciphertexts"
+        );
     }
 
     #[test]
@@ -145,7 +160,10 @@ mod tests {
         // Same plaintext with same key + IV must produce identical ciphertext.
         let enc1 = encrypt_cookie_value("determinism_check").unwrap();
         let enc2 = encrypt_cookie_value("determinism_check").unwrap();
-        assert_eq!(enc1, enc2, "encryption of same value must be deterministic (fixed key + IV)");
+        assert_eq!(
+            enc1, enc2,
+            "encryption of same value must be deterministic (fixed key + IV)"
+        );
     }
 
     #[test]

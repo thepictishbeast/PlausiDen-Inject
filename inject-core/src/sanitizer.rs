@@ -24,8 +24,7 @@ pub fn sanitize_for_injection(artifact_bytes: &[u8]) -> Result<Vec<u8>> {
     strip_internal_metadata(&mut value);
     randomize_formatting(&mut value);
 
-    serde_json::to_vec(&value)
-        .map_err(|e| InjectError::Serialization(e.to_string()))
+    serde_json::to_vec(&value).map_err(|e| InjectError::Serialization(e.to_string()))
 }
 
 /// Remove fields that are internal to the engine and should never
@@ -100,8 +99,11 @@ pub fn audit_fingerprints(data: &[u8]) -> Vec<String> {
 
     // Check for suspiciously regular patterns. The literal below is the
     // sanitizer's own detector, not an emission target.
-    if text.contains("example.com") { // LEAK-JUSTIFIED: sanitizer detector, not output
-        warnings.push("Contains 'example.com' — a test domain that real users rarely visit".to_string()); // LEAK-JUSTIFIED: warning copy quotes the very literal it detects
+    if text.contains("example.com") {
+        // LEAK-JUSTIFIED: sanitizer detector, not output
+        warnings.push(
+            "Contains 'example.com' — a test domain that real users rarely visit".to_string(),
+        ); // LEAK-JUSTIFIED: warning copy quotes the very literal it detects
     }
 
     // Check for UUID v4 patterns (our internal IDs might leak)
@@ -127,11 +129,9 @@ fn regex_lite_check(text: &str) -> bool {
             && window[3].len() == 4
             && window[4].len() >= 12
         {
-            let all_hex = window.iter().all(|p| {
-                p.chars()
-                    .take(12)
-                    .all(|c| c.is_ascii_hexdigit())
-            });
+            let all_hex = window
+                .iter()
+                .all(|p| p.chars().take(12).all(|c| c.is_ascii_hexdigit()));
             if all_hex {
                 return true;
             }
@@ -158,7 +158,10 @@ mod tests {
         let output: Value = serde_json::from_slice(&result).unwrap();
 
         assert!(output.get("meta").is_none(), "meta should be stripped");
-        assert!(output.get("artifact_id").is_none(), "artifact_id should be stripped");
+        assert!(
+            output.get("artifact_id").is_none(),
+            "artifact_id should be stripped"
+        );
         assert!(output.get("url").is_some(), "url should be preserved");
     }
 
@@ -191,6 +194,9 @@ mod tests {
     fn test_audit_fingerprints_clean() {
         let data = br#"{"url":"https://www.nytimes.com/article"}"#;
         let warnings = audit_fingerprints(data);
-        assert!(warnings.is_empty(), "real domain should not trigger warnings");
+        assert!(
+            warnings.is_empty(),
+            "real domain should not trigger warnings"
+        );
     }
 }

@@ -49,7 +49,11 @@ pub struct SqlSanitizer {
 
 impl SqlSanitizer {
     pub fn new(config: SanitizerConfig) -> Self {
-        Self { config, rejected_count: 0, sanitized_count: 0 }
+        Self {
+            config,
+            rejected_count: 0,
+            sanitized_count: 0,
+        }
     }
 
     /// Sanitize a value for safe insertion as a SQLite string literal.
@@ -66,7 +70,9 @@ impl SqlSanitizer {
 
         if self.config.reject_control_chars {
             for c in input.chars() {
-                if c.is_control() && !(self.config.allow_multiline && (c == '\n' || c == '\r' || c == '\t')) {
+                if c.is_control()
+                    && !(self.config.allow_multiline && (c == '\n' || c == '\r' || c == '\t'))
+                {
                     self.rejected_count += 1;
                     return SanitizeResult::Rejected(RejectReason::ContainsControlChar);
                 }
@@ -135,12 +141,18 @@ impl SqlSanitizer {
         SanitizeResult::Safe(input.into())
     }
 
-    pub fn rejected_count(&self) -> u64 { self.rejected_count }
-    pub fn sanitized_count(&self) -> u64 { self.sanitized_count }
+    pub fn rejected_count(&self) -> u64 {
+        self.rejected_count
+    }
+    pub fn sanitized_count(&self) -> u64 {
+        self.sanitized_count
+    }
 }
 
 impl Default for SqlSanitizer {
-    fn default() -> Self { Self::new(SanitizerConfig::default()) }
+    fn default() -> Self {
+        Self::new(SanitizerConfig::default())
+    }
 }
 
 fn looks_like_injection(s: &str) -> bool {
@@ -181,28 +193,40 @@ mod tests {
     fn test_reject_null_byte() {
         let mut s = SqlSanitizer::default();
         let result = s.sanitize_string("hello\0world");
-        assert!(matches!(result, SanitizeResult::Rejected(RejectReason::ContainsNullByte)));
+        assert!(matches!(
+            result,
+            SanitizeResult::Rejected(RejectReason::ContainsNullByte)
+        ));
     }
 
     #[test]
     fn test_reject_control_char() {
         let mut s = SqlSanitizer::default();
         let result = s.sanitize_string("hello\x01world");
-        assert!(matches!(result, SanitizeResult::Rejected(RejectReason::ContainsControlChar)));
+        assert!(matches!(
+            result,
+            SanitizeResult::Rejected(RejectReason::ContainsControlChar)
+        ));
     }
 
     #[test]
     fn test_reject_too_long() {
         let mut s = SqlSanitizer::default();
         let result = s.sanitize_string(&"a".repeat(10_000));
-        assert!(matches!(result, SanitizeResult::Rejected(RejectReason::TooLong(_))));
+        assert!(matches!(
+            result,
+            SanitizeResult::Rejected(RejectReason::TooLong(_))
+        ));
     }
 
     #[test]
     fn test_reject_injection_pattern() {
         let mut s = SqlSanitizer::default();
         let result = s.sanitize_string("' or '1'='1");
-        assert!(matches!(result, SanitizeResult::Rejected(RejectReason::LooksLikeInjection)));
+        assert!(matches!(
+            result,
+            SanitizeResult::Rejected(RejectReason::LooksLikeInjection)
+        ));
     }
 
     #[test]
@@ -221,7 +245,10 @@ mod tests {
     #[test]
     fn test_sanitize_float() {
         let mut s = SqlSanitizer::default();
-        assert_eq!(s.sanitize_float("3.14"), SanitizeResult::Safe("3.14".into()));
+        assert_eq!(
+            s.sanitize_float("3.14"),
+            SanitizeResult::Safe("3.14".into())
+        );
     }
 
     #[test]
@@ -234,7 +261,10 @@ mod tests {
     #[test]
     fn test_validate_identifier_ok() {
         let mut s = SqlSanitizer::default();
-        assert_eq!(s.validate_identifier("moz_places"), SanitizeResult::Safe("moz_places".into()));
+        assert_eq!(
+            s.validate_identifier("moz_places"),
+            SanitizeResult::Safe("moz_places".into())
+        );
     }
 
     #[test]

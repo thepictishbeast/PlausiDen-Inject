@@ -98,7 +98,8 @@ impl SnapshotStore {
 
     /// All snapshots for a target.
     pub fn for_target(&self, target_id: &str) -> Vec<&Snapshot> {
-        self.by_target.get(target_id)
+        self.by_target
+            .get(target_id)
             .map(|ids| ids.iter().filter_map(|id| self.snapshots.get(id)).collect())
             .unwrap_or_default()
     }
@@ -112,7 +113,10 @@ impl SnapshotStore {
 
     /// Active snapshots.
     pub fn active(&self) -> Vec<&Snapshot> {
-        self.snapshots.values().filter(|s| s.state == SnapshotState::Active).collect()
+        self.snapshots
+            .values()
+            .filter(|s| s.state == SnapshotState::Active)
+            .collect()
     }
 
     /// Expired snapshots.
@@ -131,12 +135,17 @@ impl SnapshotStore {
 
     /// Snapshots older than N seconds.
     pub fn older_than(&self, secs: i64) -> Vec<&Snapshot> {
-        self.snapshots.values().filter(|s| s.age_secs() > secs).collect()
+        self.snapshots
+            .values()
+            .filter(|s| s.age_secs() > secs)
+            .collect()
     }
 }
 
 impl Default for SnapshotStore {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[cfg(test)]

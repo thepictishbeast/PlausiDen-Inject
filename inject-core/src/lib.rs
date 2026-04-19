@@ -24,6 +24,4 @@ pub mod verification;
 
 // Re-export the public API at crate root for convenience.
 pub use error::{InjectError, Result};
-pub use traits::{
-    InjectionResult, InjectionStrategy, Injector, Target, VerificationStatus,
-};
+pub use traits::{InjectionResult, InjectionStrategy, Injector, Target, VerificationStatus};

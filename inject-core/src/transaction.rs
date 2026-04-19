@@ -52,14 +52,22 @@ impl InjectionTransaction {
         map
     }
 
-    pub fn total_ops(&self) -> usize { self.operations.len() }
+    pub fn total_ops(&self) -> usize {
+        self.operations.len()
+    }
 
     pub fn successful_ops(&self) -> usize {
-        self.operations.iter().filter(|o| o.status == OpStatus::Success).count()
+        self.operations
+            .iter()
+            .filter(|o| o.status == OpStatus::Success)
+            .count()
     }
 
     pub fn failed_ops(&self) -> usize {
-        self.operations.iter().filter(|o| o.status == OpStatus::Failed).count()
+        self.operations
+            .iter()
+            .filter(|o| o.status == OpStatus::Failed)
+            .count()
     }
 }
 
@@ -82,16 +90,19 @@ impl TransactionManager {
         if self.transactions.contains_key(id) {
             return false;
         }
-        self.transactions.insert(id.into(), InjectionTransaction {
-            id: id.into(),
-            target_id: target_id.into(),
-            operations: Vec::new(),
-            state: TxState::Open,
-            started_at: Utc::now(),
-            committed_at: None,
-            aborted_at: None,
-            labels,
-        });
+        self.transactions.insert(
+            id.into(),
+            InjectionTransaction {
+                id: id.into(),
+                target_id: target_id.into(),
+                operations: Vec::new(),
+                state: TxState::Open,
+                started_at: Utc::now(),
+                committed_at: None,
+                aborted_at: None,
+                labels,
+            },
+        );
         true
     }
 
@@ -143,7 +154,11 @@ impl TransactionManager {
             if tx.state != TxState::Open {
                 return Err("transaction not open".into());
             }
-            let failed = tx.operations.iter().filter(|o| o.status == OpStatus::Failed).count();
+            let failed = tx
+                .operations
+                .iter()
+                .filter(|o| o.status == OpStatus::Failed)
+                .count();
             if failed > 0 {
                 tx.state = TxState::PartiallyCommitted;
                 return Err(format!("{} operations failed", failed));
@@ -172,17 +187,26 @@ impl TransactionManager {
 
     /// All open transactions.
     pub fn open(&self) -> Vec<&InjectionTransaction> {
-        self.transactions.values().filter(|t| t.state == TxState::Open).collect()
+        self.transactions
+            .values()
+            .filter(|t| t.state == TxState::Open)
+            .collect()
     }
 
     /// All committed transactions.
     pub fn committed(&self) -> Vec<&InjectionTransaction> {
-        self.transactions.values().filter(|t| t.state == TxState::Committed).collect()
+        self.transactions
+            .values()
+            .filter(|t| t.state == TxState::Committed)
+            .collect()
     }
 
     /// Partially committed transactions (need rollback).
     pub fn partially_committed(&self) -> Vec<&InjectionTransaction> {
-        self.transactions.values().filter(|t| t.state == TxState::PartiallyCommitted).collect()
+        self.transactions
+            .values()
+            .filter(|t| t.state == TxState::PartiallyCommitted)
+            .collect()
     }
 
     pub fn transaction_count(&self) -> usize {
@@ -191,7 +215,9 @@ impl TransactionManager {
 }
 
 impl Default for TransactionManager {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[cfg(test)]

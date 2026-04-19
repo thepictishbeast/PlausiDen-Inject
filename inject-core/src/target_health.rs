@@ -42,8 +42,10 @@ impl HealthReport {
     pub fn is_permanent_failure(&self) -> bool {
         matches!(
             self.status,
-            HealthStatus::Missing | HealthStatus::Readonly
-                | HealthStatus::CorruptedSchema | HealthStatus::UnsupportedVersion
+            HealthStatus::Missing
+                | HealthStatus::Readonly
+                | HealthStatus::CorruptedSchema
+                | HealthStatus::UnsupportedVersion
         )
     }
 }
@@ -55,34 +57,60 @@ pub struct TargetHealthChecker {
 
 impl TargetHealthChecker {
     pub fn new() -> Self {
-        Self { reports: HashMap::new() }
+        Self {
+            reports: HashMap::new(),
+        }
     }
 
     /// Record the outcome of a health check.
-    pub fn record(&mut self, target_id: &str, path: PathBuf, status: HealthStatus, detail: Option<String>) {
+    pub fn record(
+        &mut self,
+        target_id: &str,
+        path: PathBuf,
+        status: HealthStatus,
+        detail: Option<String>,
+    ) {
         let now = Utc::now();
         let existing = self.reports.get(target_id).cloned();
         let (last_ready, consecutive_failures) = match &existing {
             Some(prev) => {
-                let failures = if status == HealthStatus::Ready { 0 } else { prev.consecutive_failures + 1 };
-                let last_ready = if status == HealthStatus::Ready { Some(now) } else { prev.last_ready };
+                let failures = if status == HealthStatus::Ready {
+                    0
+                } else {
+                    prev.consecutive_failures + 1
+                };
+                let last_ready = if status == HealthStatus::Ready {
+                    Some(now)
+                } else {
+                    prev.last_ready
+                };
                 (last_ready, failures)
             }
             None => {
-                let last_ready = if status == HealthStatus::Ready { Some(now) } else { None };
-                (last_ready, if status == HealthStatus::Ready { 0 } else { 1 })
+                let last_ready = if status == HealthStatus::Ready {
+                    Some(now)
+                } else {
+                    None
+                };
+                (
+                    last_ready,
+                    if status == HealthStatus::Ready { 0 } else { 1 },
+                )
             }
         };
 
-        self.reports.insert(target_id.into(), HealthReport {
-            target_id: target_id.into(),
-            path,
-            status,
-            checked_at: now,
-            last_ready,
-            consecutive_failures,
-            detail,
-        });
+        self.reports.insert(
+            target_id.into(),
+            HealthReport {
+                target_id: target_id.into(),
+                path,
+                status,
+                checked_at: now,
+                last_ready,
+                consecutive_failures,
+                detail,
+            },
+        );
     }
 
     /// Get health report for a specific target.
@@ -107,12 +135,16 @@ impl TargetHealthChecker {
 
     /// Targets with permanent failures.
     pub fn permanent_failures(&self) -> Vec<&HealthReport> {
-        self.reports.values().filter(|r| r.is_permanent_failure()).collect()
+        self.reports
+            .values()
+            .filter(|r| r.is_permanent_failure())
+            .collect()
     }
 
     /// Targets with N or more consecutive failures.
     pub fn chronic_failures(&self, min_failures: u32) -> Vec<&HealthReport> {
-        self.reports.values()
+        self.reports
+            .values()
             .filter(|r| r.consecutive_failures >= min_failures)
             .collect()
     }
@@ -132,7 +164,9 @@ impl TargetHealthChecker {
 }
 
 impl Default for TargetHealthChecker {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[cfg(test)]
@@ -142,7 +176,12 @@ mod tests {
     #[test]
     fn test_record_ready() {
         let mut c = TargetHealthChecker::new();
-        c.record("firefox", "/home/user/.mozilla/firefox/profile/places.sqlite".into(), HealthStatus::Ready, None);
+        c.record(
+            "firefox",
+            "/home/user/.mozilla/firefox/profile/places.sqlite".into(),
+            HealthStatus::Ready,
+            None,
+        );
         let r = c.get("firefox").unwrap();
         assert!(r.is_ready());
         assert!(r.last_ready.is_some());
@@ -207,7 +246,9 @@ mod tests {
     #[test]
     fn test_chronic_failures() {
         let mut c = TargetHealthChecker::new();
-        for _ in 0..5 { c.record("a", PathBuf::from("/a"), HealthStatus::Locked, None); }
+        for _ in 0..5 {
+            c.record("a", PathBuf::from("/a"), HealthStatus::Locked, None);
+        }
         c.record("b", PathBuf::from("/b"), HealthStatus::Locked, None);
         let chronic = c.chronic_failures(3);
         assert_eq!(chronic.len(), 1);

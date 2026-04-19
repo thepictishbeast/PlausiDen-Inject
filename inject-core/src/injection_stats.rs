@@ -25,11 +25,17 @@ pub struct InjectionStats {
 
 impl InjectionStats {
     pub fn new() -> Self {
-        Self { records: Vec::new(), history_limit: 10_000 }
+        Self {
+            records: Vec::new(),
+            history_limit: 10_000,
+        }
     }
 
     pub fn with_limit(limit: usize) -> Self {
-        Self { records: Vec::new(), history_limit: limit }
+        Self {
+            records: Vec::new(),
+            history_limit: limit,
+        }
     }
 
     /// Record a new injection attempt.
@@ -65,7 +71,8 @@ impl InjectionStats {
 
     /// Total artifacts injected across all runs.
     pub fn total_artifacts(&self) -> u64 {
-        self.records.iter()
+        self.records
+            .iter()
             .filter(|r| r.success)
             .map(|r| r.artifact_count as u64)
             .sum()
@@ -73,7 +80,8 @@ impl InjectionStats {
 
     /// Total bytes written across all runs.
     pub fn total_bytes(&self) -> u64 {
-        self.records.iter()
+        self.records
+            .iter()
             .filter(|r| r.success)
             .map(|r| r.bytes_written)
             .sum()
@@ -81,7 +89,9 @@ impl InjectionStats {
 
     /// Average duration in milliseconds for successful runs.
     pub fn avg_duration_ms(&self) -> Option<f64> {
-        let durations: Vec<u64> = self.records.iter()
+        let durations: Vec<u64> = self
+            .records
+            .iter()
             .filter(|r| r.success)
             .map(|r| r.duration_ms)
             .collect();
@@ -97,7 +107,11 @@ impl InjectionStats {
         let mut map: HashMap<String, (usize, usize)> = HashMap::new();
         for r in &self.records {
             let entry = map.entry(r.target.clone()).or_insert((0, 0));
-            if r.success { entry.0 += 1; } else { entry.1 += 1; }
+            if r.success {
+                entry.0 += 1;
+            } else {
+                entry.1 += 1;
+            }
         }
         map
     }
@@ -107,7 +121,11 @@ impl InjectionStats {
         let mut map: HashMap<String, (usize, usize)> = HashMap::new();
         for r in &self.records {
             let entry = map.entry(r.strategy.clone()).or_insert((0, 0));
-            if r.success { entry.0 += 1; } else { entry.1 += 1; }
+            if r.success {
+                entry.0 += 1;
+            } else {
+                entry.1 += 1;
+            }
         }
         map
     }
@@ -147,7 +165,9 @@ impl InjectionStats {
 }
 
 impl Default for InjectionStats {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[cfg(test)]
@@ -180,7 +200,9 @@ mod tests {
     #[test]
     fn test_success_rate() {
         let mut s = InjectionStats::new();
-        for _ in 0..3 { s.record(mk("a", "d", true, None)); }
+        for _ in 0..3 {
+            s.record(mk("a", "d", true, None));
+        }
         s.record(mk("a", "d", false, Some("e")));
         assert_eq!(s.success_rate(), 0.75);
     }
@@ -220,8 +242,12 @@ mod tests {
     #[test]
     fn test_top_errors() {
         let mut s = InjectionStats::new();
-        for _ in 0..5 { s.record(mk("t", "d", false, Some("database locked"))); }
-        for _ in 0..2 { s.record(mk("t", "d", false, Some("permission denied"))); }
+        for _ in 0..5 {
+            s.record(mk("t", "d", false, Some("database locked")));
+        }
+        for _ in 0..2 {
+            s.record(mk("t", "d", false, Some("permission denied")));
+        }
         let top = s.top_errors(5);
         assert_eq!(top[0], ("database locked".to_string(), 5));
     }
