@@ -98,9 +98,10 @@ pub fn audit_fingerprints(data: &[u8]) -> Vec<String> {
     let mut warnings = Vec::new();
     let text = String::from_utf8_lossy(data);
 
-    // Check for suspiciously regular patterns
-    if text.contains("example.com") {
-        warnings.push("Contains 'example.com' — a test domain that real users rarely visit".to_string());
+    // Check for suspiciously regular patterns. The literal below is the
+    // sanitizer's own detector, not an emission target.
+    if text.contains("example.com") { // LEAK-JUSTIFIED: sanitizer detector, not output
+        warnings.push("Contains 'example.com' — a test domain that real users rarely visit".to_string()); // LEAK-JUSTIFIED: warning copy quotes the very literal it detects
     }
 
     // Check for UUID v4 patterns (our internal IDs might leak)
