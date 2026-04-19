@@ -120,7 +120,7 @@ impl SqlSanitizer {
         }
         // Only [A-Za-z_][A-Za-z0-9_]*.
         let mut chars = input.chars();
-        let first = chars.next().unwrap();
+        let first = chars.next().unwrap(); // SAFETY: input.is_empty() returned false on line 116, so at least one char exists
         if !(first.is_ascii_alphabetic() || first == '_') {
             self.rejected_count += 1;
             return SanitizeResult::Rejected(RejectReason::LooksLikeInjection);

@@ -30,7 +30,7 @@ impl PrefetchRecord {
     /// Generate a simple hash from the executable path (simplified version of Windows hash).
     pub fn compute_hash(exe_path: &str) -> String {
         let hash = blake3::hash(exe_path.as_bytes());
-        format!("{:08X}", u32::from_le_bytes(hash.as_bytes()[..4].try_into().unwrap()))
+        format!("{:08X}", u32::from_le_bytes(hash.as_bytes()[..4].try_into().unwrap())) // SAFETY: blake3::hash returns a 32-byte Hash; slicing [..4] and try_into::<[u8;4]> is always Ok
     }
 }
 
