@@ -136,7 +136,7 @@ impl AttributionScrubber {
     /// Apply all enabled rules to a set of fields. Returns a report.
     pub fn apply(&mut self, target_path: &str, fields: &HashMap<String, String>) -> ScrubReport {
         let mut scrubbed = Vec::new();
-        let mut failed = Vec::new();
+        let failed = Vec::new();
 
         for rule in &self.rules {
             if !rule.enabled {

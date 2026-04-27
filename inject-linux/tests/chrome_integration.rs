@@ -226,15 +226,14 @@ fn test_chrome_duplicate_url_handling() {
     );
 
     let conn = Connection::open(dir.path().join("History")).unwrap();
-    let urls: i64 = conn
+    // Chrome may create 1 or 2 URL entries (INSERT OR IGNORE depends on
+    // the UNIQUE index). Visits, on the other hand, must always be 2.
+    let _urls: i64 = conn
         .query_row("SELECT COUNT(*) FROM urls", [], |r| r.get(0))
         .unwrap();
     let visits: i64 = conn
         .query_row("SELECT COUNT(*) FROM visits", [], |r| r.get(0))
         .unwrap();
-
-    // Chrome may create 2 URL entries (INSERT OR IGNORE depends on UNIQUE index)
-    // Either way, visits should be 2
     assert_eq!(visits, 2, "each visit should be recorded");
 }
 

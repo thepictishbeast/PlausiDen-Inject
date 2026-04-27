@@ -85,11 +85,14 @@ impl TransactionManager {
         }
     }
 
-    /// Begin a new transaction.
+    /// Begin a new transaction. Prunes the oldest closed transactions
+    /// (committed/aborted/partially-committed) when total exceeds
+    /// `history_limit`. Open transactions are never pruned.
     pub fn begin(&mut self, id: &str, target_id: &str, labels: Vec<String>) -> bool {
         if self.transactions.contains_key(id) {
             return false;
         }
+        self.prune_closed();
         self.transactions.insert(
             id.into(),
             InjectionTransaction {
@@ -211,6 +214,29 @@ impl TransactionManager {
 
     pub fn transaction_count(&self) -> usize {
         self.transactions.len()
+    }
+
+    /// REGRESSION-GUARD: closed-transaction accumulation. Without this,
+    /// a long-running process leaks one entry per begin(). Open
+    /// transactions are sacred — never pruned.
+    fn prune_closed(&mut self) {
+        if self.transactions.len() < self.history_limit {
+            return;
+        }
+        let mut closed: Vec<(String, chrono::DateTime<Utc>)> = self
+            .transactions
+            .iter()
+            .filter(|(_, t)| t.state != TxState::Open)
+            .map(|(id, t)| {
+                let stamp = t.committed_at.or(t.aborted_at).unwrap_or(t.started_at);
+                (id.clone(), stamp)
+            })
+            .collect();
+        closed.sort_by_key(|(_, stamp)| *stamp);
+        let to_remove = self.transactions.len().saturating_sub(self.history_limit) + 1;
+        for (id, _) in closed.into_iter().take(to_remove) {
+            self.transactions.remove(&id);
+        }
     }
 }
 
