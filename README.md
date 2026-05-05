@@ -43,7 +43,7 @@ plausiden-engine  →  artifact bytes  →  plausiden-inject  →  OS data store
 ## Quick Start
 
 ```bash
-git clone https://github.com/redcaptian1917/PlausiDen-Inject.git
+git clone https://github.com/thepictishbeast/PlausiDen-Inject.git
 cd PlausiDen-Inject
 just check-all
 ```
